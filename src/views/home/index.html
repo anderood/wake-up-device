@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispositivos</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #111827 55%, #1e293b 100%);
+    }
+
+    main {
+      width: min(960px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+
+    .primary-link,
+    .secondary-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .primary-link {
+      background: #2563eb;
+    }
+
+    .secondary-link {
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .device-card {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-height: 210px;
+      padding: 22px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.72);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .device-card h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .device-type {
+      display: inline-flex;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.18);
+      color: #bfdbfe;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .device-info {
+      display: grid;
+      gap: 8px;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    .device-info span {
+      color: #94a3b8;
+    }
+
+    button {
+      width: 100%;
+      margin-top: auto;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .card-actions button,
+    .card-actions .secondary-link {
+      width: 100%;
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100% - 24px, 960px);
+        padding: 28px 0;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .primary-link {
+        width: 100%;
+      }
+
+      .device-card {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Dispositivos</h1>
+        <p>Gerencie os dispositivos cadastrados da sua rede interna.</p>
+      </div>
+      <a class="primary-link" href="/add/create">Adicionar dispositivo</a>
+    </header>
+
+    <section class="device-grid" aria-label="Dispositivos cadastrados">
+      <article class="device-card">
+        <span class="device-type">TV</span>
+        <div>
+          <h2>TV da Sala</h2>
+          <div class="device-info">
+            <div><span>Local:</span> Sala</div>
+            <div><span>MAC:</span> 00:11:22:33:44:55</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a class="secondary-link" href="/device/1/edit">Editar</a>
+          <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
+        </div>
+      </article>
+
+      <article class="device-card">
+        <span class="device-type">Computador</span>
+        <div>
+          <h2>PC do Escritorio</h2>
+          <div class="device-info">
+            <div><span>Local:</span> Escritorio</div>
+            <div><span>MAC:</span> AA:BB:CC:DD:EE:FF</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a class="secondary-link" href="/device/2/edit">Editar</a>
+          <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
+        </div>
+      </article>
+
+      <article class="device-card">
+        <span class="device-type">TV</span>
+        <div>
+          <h2>TV do Quarto</h2>
+          <div class="device-info">
+            <div><span>Local:</span> Quarto</div>
+            <div><span>MAC:</span> 66:77:88:99:AA:BB</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a class="secondary-link" href="/device/3/edit">Editar</a>
+          <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
