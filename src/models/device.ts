@@ -1,5 +1,5 @@
-import Sequelize from 'sequelize';
-import database from "../database/database.js";
+import Sequelize from "sequelize";
+import database from "../database/database.ts";
 
 const devices = database.define(
 
@@ -13,7 +13,6 @@ const devices = database.define(
         },
         name: {
             type: Sequelize.CHAR(20),
-            varChar: 20,
             allowNull: false
         },
         type: {

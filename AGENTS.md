@@ -18,9 +18,9 @@
 - HTML forms cannot submit `PUT` or `DELETE` directly; existing `PUT /device/:id/update` and `DELETE /device/:id` routes need JS, method override, or route changes before real browser forms can use them.
 
 ## Data Layer
-- Sequelize/MySQL files exist (`src/database/database.js`, `src/models/device.ts`) but are not wired into controllers yet.
+- Sequelize/MySQL files exist (`src/database/database.ts`, `src/models/device.ts`) but are not wired into controllers yet.
 - `.env` is ignored; use `.env.example` for expected DB variable names.
-- Verify `src/database/database.js` before relying on it: it currently references DB env vars directly and should be checked against `.env.example`.
+- Database config loads `.env` with `dotenv` and uses the variable names from `.env.example`.
 
 ## Views
 - Current home views are `index.html`, `add.html`, and `edit.html` under `src/views/home/`.
