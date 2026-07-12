@@ -4,6 +4,9 @@ import web from './src/router/web.ts';
 
 const app: Express = express();
 
+app.set("view engine", "ejs");
+app.set("views", "./src/views");
+
 app.use("/api", routes);
 app.use("/", web);
 

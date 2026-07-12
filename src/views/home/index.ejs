@@ -174,50 +174,21 @@
     </header>
 
     <section class="device-grid" aria-label="Dispositivos cadastrados">
-      <article class="device-card">
-        <span class="device-type">TV</span>
-        <div>
-          <h2>TV da Sala</h2>
-          <div class="device-info">
-            <div><span>Local:</span> Sala</div>
-            <div><span>MAC:</span> 00:11:22:33:44:55</div>
+      <% devices.forEach(device => { %>
+        <article class="device-card">
+          <span class="device-type"><%= device.type || "Sem tipo" %></span>
+          <div>
+            <h2><%= device.name %></h2>
+            <div class="device-info">
+              <div><span>MAC:</span> <%= device.mac_address %></div>
+            </div>
           </div>
-        </div>
-        <div class="card-actions">
-          <a class="secondary-link" href="/device/1/edit">Editar</a>
-          <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
-        </div>
-      </article>
-
-      <article class="device-card">
-        <span class="device-type">Computador</span>
-        <div>
-          <h2>PC do Escritorio</h2>
-          <div class="device-info">
-            <div><span>Local:</span> Escritorio</div>
-            <div><span>MAC:</span> AA:BB:CC:DD:EE:FF</div>
+          <div class="card-actions">
+            <a class="secondary-link" href="/device/<%= device.id %>/edit">Editar</a>
+            <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
           </div>
-        </div>
-        <div class="card-actions">
-          <a class="secondary-link" href="/device/2/edit">Editar</a>
-          <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
-        </div>
-      </article>
-
-      <article class="device-card">
-        <span class="device-type">TV</span>
-        <div>
-          <h2>TV do Quarto</h2>
-          <div class="device-info">
-            <div><span>Local:</span> Quarto</div>
-            <div><span>MAC:</span> 66:77:88:99:AA:BB</div>
-          </div>
-        </div>
-        <div class="card-actions">
-          <a class="secondary-link" href="/device/3/edit">Editar</a>
-          <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
-        </div>
-      </article>
+        </article>
+      <% }) %>
     </section>
   </main>
 </body>

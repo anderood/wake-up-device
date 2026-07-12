@@ -27,6 +27,9 @@ const devices = database.define(
             type: Sequelize.TINYINT,
             allowNull: false
         }
+    },{
+        createdAt:false,
+        updatedAt:false
     }
 );
 
