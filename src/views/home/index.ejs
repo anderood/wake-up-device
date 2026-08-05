@@ -68,6 +68,43 @@
       text-align: center;
     }
 
+    .search-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.7);
+      color: #e5e7eb;
+      font: inherit;
+    }
+
+    .search-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .search-input:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.45);
+      outline-offset: 2px;
+    }
+
+    .search-button {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .primary-link,
     .secondary-link {
       display: inline-flex;
@@ -315,6 +352,14 @@
         width: 100%;
       }
 
+      .search-form {
+        flex-direction: column;
+      }
+
+      .search-button {
+        width: 100%;
+      }
+
       .device-card {
         min-height: auto;
       }
@@ -339,6 +384,18 @@
       <a class="primary-link" href="/add/create">Adicionar dispositivo</a>
     </header>
 
+    <form class="search-form" action="/" method="get" role="search">
+      <input
+        class="search-input"
+        type="search"
+        name="q"
+        value="<%= searchTerm %>"
+        placeholder="Buscar por nome, tipo ou local"
+        aria-label="Buscar por nome, tipo ou local"
+      >
+      <button class="search-button" type="submit">Buscar</button>
+    </form>
+
     <% if (created) { %>
       <p class="success-message" role="status">Dispositivo cadastrado com sucesso.</p>
     <% } %>
@@ -349,7 +406,7 @@
 
     <section class="device-grid" aria-label="Dispositivos cadastrados">
       <% if (devices.length === 0) { %>
-        <p class="empty-message">Nenhum dispositivo cadastrado.</p>
+        <p class="empty-message"><%= searchTerm ? "Nenhum dispositivo encontrado para a busca." : "Nenhum dispositivo cadastrado." %></p>
       <% } %>
 
       <% devices.forEach(device => { %>
@@ -404,6 +461,7 @@
   </main>
   <script>
     const deviceGrid = document.querySelector(".device-grid");
+    const searchInput = document.querySelector(".search-input");
     const deleteDialog = document.querySelector("#deleteDialog");
     const deleteDeviceName = document.querySelector("#deleteDeviceName");
     const deleteError = document.querySelector("#deleteError");
@@ -569,7 +627,9 @@
         if (!deviceGrid.querySelector(".device-card")) {
           const emptyMessage = document.createElement("p");
           emptyMessage.className = "empty-message";
-          emptyMessage.textContent = "Nenhum dispositivo cadastrado.";
+          emptyMessage.textContent = searchInput && searchInput.value.trim()
+            ? "Nenhum dispositivo encontrado para a busca."
+            : "Nenhum dispositivo cadastrado.";
           deviceGrid.append(emptyMessage);
         }
       } catch (error) {

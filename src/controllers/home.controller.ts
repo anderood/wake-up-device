@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { isIPv4 } from "node:net";
-import { UniqueConstraintError } from "sequelize";
+import { Op, UniqueConstraintError } from "sequelize";
 import devices from "../models/device.ts";
 import { pingIpv4 } from "../services/ping.ts";
 import { wakeDevice } from "../services/wake-on-lan.ts";
@@ -133,9 +133,21 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
 export default class HomeController {
 
     async index(req: Request, res: Response) {
-        const allDevices = await devices.findAll({ where: { status: 1 } });
+        const searchTerm = typeof req.query.q === "string" ? req.query.q.trim() : "";
+        const where: Record<string | symbol, unknown> = { status: 1 };
+
+        if (searchTerm.length > 0) {
+            where[Op.or] = [
+                { name: { [Op.like]: `%${searchTerm}%` } },
+                { type: { [Op.like]: `%${searchTerm}%` } },
+                { location: { [Op.like]: `%${searchTerm}%` } }
+            ];
+        }
+
+        const allDevices = await devices.findAll({ where });
         return res.render("home/index", {
             devices: allDevices,
+            searchTerm,
             created: req.query.created === "1",
             updated: req.query.updated === "1"
         });
