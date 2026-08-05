@@ -12,11 +12,11 @@ const devices = database.define(
             allowNull: false
         },
         name: {
-            type: Sequelize.CHAR(20),
+            type: Sequelize.STRING(20),
             allowNull: false
         },
         type: {
-            type: Sequelize.CHAR(20),
+            type: Sequelize.STRING(20),
             allowNull: true
         },
         location: {
@@ -29,7 +29,7 @@ const devices = database.define(
             allowNull: true
         },
         mac_address:{
-            type: Sequelize.CHAR(20),
+            type: Sequelize.STRING(20),
             allowNull: true,
             unique: true
         },
@@ -38,7 +38,7 @@ const devices = database.define(
             allowNull: true
         },
         status: {
-            type: Sequelize.TINYINT,
+            type: Sequelize.INTEGER,
             allowNull: false
         }
     },{

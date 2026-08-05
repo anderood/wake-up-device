@@ -5,7 +5,9 @@ WORKDIR /app
 RUN apk add --no-cache iputils
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN apk add --no-cache --virtual .build-deps python3 make g++ \
+    && npm ci --omit=dev \
+    && apk del .build-deps
 
 COPY server.ts tsconfig.json ./
 COPY src ./src

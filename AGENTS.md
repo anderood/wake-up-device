@@ -11,12 +11,12 @@ agents working on Wake Up Device.
 - Server-rendered UI: EJS templates with native HTML forms.
 - Browser layer: inline vanilla JavaScript and CSS inside the EJS views. There
   is no frontend framework, static asset pipeline, bundler, or CSS framework.
-- Database: MySQL 8.4 through Sequelize 6 and the `mysql2` driver.
+- Database: SQLite through Sequelize 6 and the native `sqlite3` driver.
 - Migrations: Umzug with Sequelize storage.
 - Network operations: `wake_on_lan` for UDP magic packets and the system `ping`
   command through Node's `execFile`.
-- Local orchestration: Docker Compose with separate `app`, `migrate`, and
-  `database` services.
+- Local orchestration: Docker Compose with separate `app` and `migrate` services
+  sharing one persistent SQLite volume.
 
 ## TypeScript And Module Rules
 
@@ -37,10 +37,10 @@ agents working on Wake Up Device.
   and ping request handling.
 - `src/controllers/api.controller.ts`: current API welcome response.
 - `src/models/device.ts`: Sequelize model for the `devices` table.
-- `src/database/database.ts`: Sequelize/MySQL connection from environment
-  variables.
+- `src/database/database.ts`: Sequelize/SQLite connection using `DB_STORAGE`.
 - `src/database/migrate.ts`: Umzug runner.
-- `src/database/migrations/`: incremental schema migrations.
+- `src/database/migrations/`: schema migrations, including initial table
+  creation for an empty SQLite file.
 - `src/services/wake-on-lan.ts`: Promise wrapper around the CommonJS
   `wake_on_lan` package.
 - `src/services/ping.ts`: validated IPv4 ping execution and in-flight request
@@ -49,9 +49,8 @@ agents working on Wake Up Device.
   delete flows.
 - `src/views/home/add.ejs`: create form.
 - `src/views/home/edit.ejs`: edit form.
-- `docker/mysql/init.sql`: baseline schema used only when a new MySQL volume is
-  initialized.
-- `compose.yaml`: application, migration, and MySQL service definitions.
+- `compose.yaml`: application and migration service definitions plus the shared
+  SQLite volume.
 
 ## HTTP And Routing Contracts
 
@@ -105,29 +104,31 @@ or soft-delete behavior.
 
 The application currently uses one table, `devices`:
 
-| Column | Baseline SQL type | Null | Default and constraints | Application meaning |
+| Column | SQLite type | Null | Default and constraints | Application meaning |
 | --- | --- | --- | --- | --- |
-| `id` | `INT UNSIGNED` | No | Primary key, auto increment | Device identifier |
+| `id` | `INTEGER` | No | Primary key, auto increment | Device identifier |
 | `name` | `VARCHAR(20)` | No | None | Required display name |
 | `type` | `VARCHAR(20)` | Yes | None | Required by controller validation |
 | `location` | `VARCHAR(50)` | No | `Nao informado` | Required device location |
 | `external_url` | `VARCHAR(2048)` | Yes | None | HTTP/HTTPS destination for external items |
 | `mac_address` | `VARCHAR(20)` | Yes | Unique when non-null | Wake-on-LAN destination |
 | `ip_address` | `VARCHAR(15)` | Yes | None | Optional IPv4 used for reachability checks |
-| `status` | `TINYINT` | No | `1` | Only rows with value `1` are listed and editable |
+| `status` | `INTEGER` | No | `1` | Only rows with value `1` are listed and editable |
 
 Important schema behavior:
 
 - The database does not have a check constraint enforcing the external URL/MAC
   choice; this invariant is enforced in `validateDeviceForm`.
-- Multiple `NULL` MAC values are allowed by MySQL's unique index behavior.
+- Multiple `NULL` MAC values are allowed by SQLite's unique index behavior.
 - The Sequelize model disables `createdAt` and `updatedAt`; the table has no
   timestamp columns.
 - Deletion is permanent even though a `status` column exists.
-- `docker/mysql/init.sql` defines the latest baseline for new volumes. Every
-  schema change must also have an Umzug migration for existing databases.
-- Migrations must inspect existing columns or indexes when needed so they are
-  safe against a baseline that already includes the target schema.
+- The initial Umzug migration creates the complete schema in an empty SQLite
+  file. Every later schema change must have another migration.
+- SQLite has limited `ALTER TABLE` support. Test migrations that change or
+  remove columns because Sequelize may rebuild the table internally.
+- The SQLite file must remain on persistent storage. The Docker `app` and
+  `migrate` services must always mount the same volume and storage path.
 
 ## Wake-on-LAN And Ping
 
@@ -161,20 +162,20 @@ Important schema behavior:
 ## Environment And Docker
 
 - `.env` is ignored. Use `.env.example` as the variable reference.
-- Database variables are `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`,
-  and `DB_PORT`.
+- `DB_STORAGE` configures the SQLite file path and defaults locally to
+  `wake-up-device.sqlite`.
 - `WOL_BROADCAST_ADDRESS` configures the Wake-on-LAN broadcast target.
 - `APP_PORT` is consumed only by Docker Compose to publish container port
   `3000`; it does not change the Express listener.
-- Compose waits for MySQL health and successful migrations before starting the
-  application service.
+- Compose stores `/data/wake-up-device.sqlite` in the `sqlite-data` volume and
+  waits for successful migrations before starting the application service.
 
 ## Commands And Verification
 
 - Install dependencies: `npm install`.
 - Run with reload: `npm run dev`.
 - Run without reload: `npm start`.
-- Start app and MySQL: `docker compose up --build`.
+- Start the containerized app: `docker compose up --build`.
 - Stop containers: `docker compose down`.
 - Apply migrations: `npm run db:migrate`.
 - Type-check: `npx tsc --noEmit`.

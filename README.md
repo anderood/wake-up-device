@@ -10,7 +10,7 @@ ligar equipamentos por Wake-on-LAN ou abrir um link externo associado ao item.
 - Acesso direto a dispositivos e servicos cadastrados com link externo.
 - Endereco IPv4 opcional para verificar por ping se um dispositivo ficou online.
 - Interface web responsiva renderizada no servidor.
-- Persistencia dos dados em MySQL.
+- Persistencia dos dados em um arquivo SQLite.
 
 ## Iniciar com Docker
 
@@ -31,8 +31,8 @@ A aplicacao ficara disponivel em:
 - Interface web: http://localhost:3000
 - API: http://localhost:3000/api
 
-O Docker Compose inicia o MySQL, cria a tabela `devices` no primeiro uso, aplica
-as migracoes pendentes e somente depois inicia a aplicacao.
+O Docker Compose cria o arquivo SQLite em um volume persistente, aplica as
+migracoes pendentes e somente depois inicia a aplicacao.
 
 ## Como usar
 
@@ -55,11 +55,7 @@ Copie os valores necessarios de `.env.example` para um arquivo `.env`:
 | Variavel | Finalidade | Padrao |
 | --- | --- | --- |
 | `APP_PORT` | Porta publicada pelo Docker Compose | `3000` |
-| `DB_HOST` | Host do MySQL no desenvolvimento local | `127.0.0.1` |
-| `DB_USER` | Usuario do MySQL | `root` |
-| `DB_PASSWORD` | Senha do MySQL | `wake_up_device` no Compose |
-| `DB_DATABASE` | Nome do banco de dados | `wake_up_device` no Compose |
-| `DB_PORT` | Porta do MySQL | `3306` |
+| `DB_STORAGE` | Caminho do arquivo SQLite no desenvolvimento local | `wake-up-device.sqlite` |
 | `WOL_BROADCAST_ADDRESS` | Endereco de broadcast usado pelo Wake-on-LAN | `255.255.255.255` |
 
 `APP_PORT` altera somente a porta publicada pelo Docker Compose. O servidor
@@ -88,7 +84,6 @@ pode bloquear ICMP.
 O desenvolvimento sem Docker requer:
 
 - Node.js 23.6 ou mais recente.
-- MySQL acessivel com as configuracoes do `.env`.
 - Comando `ping` instalado no sistema.
 
 Instale as dependencias e inicie o servidor com recarregamento automatico:
@@ -128,7 +123,7 @@ npm run db:migrate
 docker compose down
 ```
 
-Para remover tambem os dados persistidos do MySQL:
+Para remover tambem o arquivo SQLite persistido no volume:
 
 ```bash
 docker compose down --volumes

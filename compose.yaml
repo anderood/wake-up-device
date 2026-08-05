@@ -3,12 +3,10 @@ x-app: &app
   build:
     context: .
   environment:
-    DB_HOST: database
-    DB_USER: root
-    DB_PASSWORD: ${DB_PASSWORD:-wake_up_device}
-    DB_DATABASE: ${DB_DATABASE:-wake_up_device}
-    DB_PORT: 3306
+    DB_STORAGE: /data/wake-up-device.sqlite
     WOL_BROADCAST_ADDRESS: ${WOL_BROADCAST_ADDRESS:-255.255.255.255}
+  volumes:
+    - sqlite-data:/data
 
 services:
   app:
@@ -16,8 +14,6 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
-      database:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -25,25 +21,6 @@ services:
   migrate:
     <<: *app
     command: npm run db:migrate
-    depends_on:
-      database:
-        condition: service_healthy
-
-  database:
-    image: mysql:8.4
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-wake_up_device}
-      MYSQL_DATABASE: ${DB_DATABASE:-wake_up_device}
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 20s
-    restart: unless-stopped
 
 volumes:
-  mysql-data:
+  sqlite-data:

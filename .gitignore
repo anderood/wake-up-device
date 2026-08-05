@@ -4,3 +4,6 @@ dist
 npm-debug.log
 .DS_Store
 .idea
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
