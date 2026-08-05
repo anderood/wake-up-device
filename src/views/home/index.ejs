@@ -177,7 +177,11 @@
       color: #ffffff;
       font: inherit;
       font-weight: 700;
-      cursor: not-allowed;
+      cursor: pointer;
+    }
+
+    .wake-button:disabled {
+      cursor: wait;
       opacity: 0.7;
     }
 
@@ -205,6 +209,23 @@
     .card-actions .device-action,
     .card-actions .secondary-link {
       width: 100%;
+    }
+
+    .wake-status {
+      grid-column: 1 / -1;
+      line-height: 1.45;
+    }
+
+    .wake-status[data-state="success"] {
+      color: #86efac;
+    }
+
+    .wake-status[data-state="warning"] {
+      color: #fde68a;
+    }
+
+    .wake-status[data-state="error"] {
+      color: #fecaca;
     }
 
     .delete-dialog {
@@ -322,6 +343,10 @@
       <p class="success-message" role="status">Dispositivo cadastrado com sucesso.</p>
     <% } %>
 
+    <% if (updated) { %>
+      <p class="success-message" role="status">Dispositivo atualizado com sucesso.</p>
+    <% } %>
+
     <section class="device-grid" aria-label="Dispositivos cadastrados">
       <% if (devices.length === 0) { %>
         <p class="empty-message">Nenhum dispositivo cadastrado.</p>
@@ -343,6 +368,9 @@
             <div class="device-info">
               <div><span>Local:</span> <%= device.location %></div>
               <div><span>MAC:</span> <%= device.mac_address %></div>
+              <% if (device.ip_address) { %>
+                <div><span>IPv4:</span> <%= device.ip_address %></div>
+              <% } %>
             </div>
           </div>
           <div class="card-actions">
@@ -350,7 +378,8 @@
             <% if (device.external_url) { %>
               <a class="device-action" href="<%= device.external_url %>" target="_blank" rel="noopener noreferrer">Acessar</a>
             <% } else { %>
-              <button class="wake-button" type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
+              <button class="wake-button" type="button" data-device-id="<%= device.id %>">Ligar</button>
+              <p class="wake-status" role="status" aria-live="polite" hidden></p>
             <% } %>
           </div>
         </article>
@@ -380,6 +409,108 @@
     const confirmDeleteButton = document.querySelector("#confirmDelete");
     let selectedDeviceId = null;
     let selectedCard = null;
+
+    async function responseError(response, fallbackMessage) {
+      try {
+        const result = await response.json();
+
+        if (typeof result.error === "string") {
+          return result.error;
+        }
+      } catch {
+        // Keep the fallback message when the response is not JSON.
+      }
+
+      return fallbackMessage;
+    }
+
+    const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+    async function waitUntilOnline(deviceId) {
+      const deadline = Date.now() + 60_000;
+
+      while (Date.now() < deadline) {
+        const response = await fetch(`/device/${encodeURIComponent(deviceId)}/ping`, {
+          method: "POST",
+          headers: { Accept: "application/json" }
+        });
+
+        if (!response.ok) {
+          throw new Error(await responseError(
+            response,
+            "Nao foi possivel verificar se o dispositivo esta online."
+          ));
+        }
+
+        const result = await response.json();
+
+        if (result.online === true) {
+          return true;
+        }
+
+        await wait(2_000);
+      }
+
+      return false;
+    }
+
+    document.querySelectorAll(".wake-button").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const deviceId = button.dataset.deviceId;
+        const status = button.parentElement.querySelector(".wake-status");
+
+        if (!deviceId || !status) {
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Enviando...";
+        status.hidden = false;
+        status.dataset.state = "";
+        status.textContent = "Enviando pacote Wake-on-LAN...";
+
+        try {
+          const response = await fetch(`/device/${encodeURIComponent(deviceId)}/wake`, {
+            method: "POST",
+            headers: { Accept: "application/json" }
+          });
+
+          if (!response.ok) {
+            throw new Error(await responseError(
+              response,
+              "Nao foi possivel enviar o pacote Wake-on-LAN. Tente novamente."
+            ));
+          }
+
+          const result = await response.json();
+
+          if (result.canConfirm !== true) {
+            status.dataset.state = "success";
+            status.textContent = "Pacote enviado. Cadastre um IPv4 para confirmar se o dispositivo ficou online.";
+            return;
+          }
+
+          button.textContent = "Aguardando...";
+          status.textContent = "Pacote enviado. Aguardando o dispositivo responder...";
+
+          if (await waitUntilOnline(deviceId)) {
+            status.dataset.state = "success";
+            status.textContent = "Dispositivo online.";
+          } else {
+            status.dataset.state = "warning";
+            status.textContent = "Pacote enviado, mas o dispositivo nao respondeu ao ping.";
+          }
+        } catch (error) {
+          status.dataset.state = "error";
+          status.textContent = error instanceof Error
+            ? error.message
+            : "Nao foi possivel acordar o dispositivo. Tente novamente.";
+        } finally {
+          button.disabled = false;
+          button.textContent = "Ligar";
+        }
+      });
+    });
 
     document.querySelectorAll(".delete-button").forEach((button) => {
       button.addEventListener("click", () => {
@@ -424,19 +555,10 @@
         });
 
         if (!response.ok) {
-          let message = "Nao foi possivel excluir o dispositivo. Tente novamente.";
-
-          try {
-            const result = await response.json();
-
-            if (typeof result.error === "string") {
-              message = result.error;
-            }
-          } catch {
-            // Keep the fallback message when the response is not JSON.
-          }
-
-          throw new Error(message);
+          throw new Error(await responseError(
+            response,
+            "Nao foi possivel excluir o dispositivo. Tente novamente."
+          ));
         }
 
         card.remove();

@@ -164,6 +164,11 @@
       </label>
 
       <label>
+        Endereco IPv4 (opcional)
+        <input type="text" name="ipAddress" value="<%= values.ipAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="192.168.1.10">
+      </label>
+
+      <label>
         Link externo?
         <select id="hasExternalLink" name="hasExternalLink" required>
           <option value="no" <%= values.hasExternalLink === "no" ? "selected" : "" %>>Nao</option>

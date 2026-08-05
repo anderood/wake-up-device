@@ -33,6 +33,10 @@ const devices = database.define(
             allowNull: false,
             unique: true
         },
+        ip_address: {
+            type: Sequelize.STRING(15),
+            allowNull: true
+        },
         status: {
             type: Sequelize.TINYINT,
             allowNull: false

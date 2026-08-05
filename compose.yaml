@@ -8,6 +8,7 @@ x-app: &app
     DB_PASSWORD: ${DB_PASSWORD:-wake_up_device}
     DB_DATABASE: ${DB_DATABASE:-wake_up_device}
     DB_PORT: 3306
+    WOL_BROADCAST_ADDRESS: ${WOL_BROADCAST_ADDRESS:-255.255.255.255}
 
 services:
   app:
