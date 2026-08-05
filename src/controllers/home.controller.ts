@@ -139,7 +139,26 @@ export default class HomeController {
         return res.sendStatus(501);
     }
 
-    destroy(_req: Request, res: Response) {
-        return res.sendStatus(501);
+    async destroy(req: Request, res: Response) {
+        const deviceId = Number(req.params.id);
+
+        if (!Number.isSafeInteger(deviceId) || deviceId <= 0) {
+            return res.status(400).json({ error: "Dispositivo invalido." });
+        }
+
+        try {
+            const deletedDevices = await devices.destroy({ where: { id: deviceId } });
+
+            if (deletedDevices === 0) {
+                return res.status(404).json({ error: "Dispositivo nao encontrado." });
+            }
+
+            return res.sendStatus(204);
+        } catch (error) {
+            console.error("Nao foi possivel excluir o dispositivo.", error);
+            return res.status(500).json({
+                error: "Nao foi possivel excluir o dispositivo. Tente novamente."
+            });
+        }
     }
 }
