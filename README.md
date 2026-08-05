@@ -22,8 +22,17 @@ A aplicacao ficara disponivel em:
 - API: http://localhost:3000/api
 
 Use `APP_PORT` no `.env` para alterar a porta publicada. O Compose configura a
-conexao interna com o MySQL e cria automaticamente a tabela `devices` na
-primeira inicializacao.
+conexao interna com o MySQL, cria a tabela `devices` na primeira inicializacao
+e aplica as migracoes pendentes antes de iniciar a aplicacao.
+
+## Migracoes
+
+As migracoes sao executadas automaticamente pelo Docker Compose. Para aplica-las
+manualmente em um ambiente local configurado pelo `.env`:
+
+```bash
+npm run db:migrate
+```
 
 ## Encerrar a aplicacao
 

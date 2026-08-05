@@ -48,6 +48,22 @@
       font-size: 1rem;
     }
 
+    .success-message {
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      border: 1px solid rgba(74, 222, 128, 0.4);
+      border-radius: 12px;
+      background: rgba(20, 83, 45, 0.35);
+      color: #bbf7d0;
+    }
+
+    .empty-message {
+      padding: 24px;
+      border: 1px dashed rgba(148, 163, 184, 0.32);
+      border-radius: 20px;
+      text-align: center;
+    }
+
     .primary-link,
     .secondary-link {
       display: inline-flex;
@@ -130,6 +146,19 @@
       opacity: 0.7;
     }
 
+    .device-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -138,6 +167,7 @@
     }
 
     .card-actions button,
+    .card-actions .device-action,
     .card-actions .secondary-link {
       width: 100%;
     }
@@ -173,19 +203,32 @@
       <a class="primary-link" href="/add/create">Adicionar dispositivo</a>
     </header>
 
+    <% if (created) { %>
+      <p class="success-message" role="status">Dispositivo cadastrado com sucesso.</p>
+    <% } %>
+
     <section class="device-grid" aria-label="Dispositivos cadastrados">
+      <% if (devices.length === 0) { %>
+        <p class="empty-message">Nenhum dispositivo cadastrado.</p>
+      <% } %>
+
       <% devices.forEach(device => { %>
         <article class="device-card">
           <span class="device-type"><%= device.type || "Sem tipo" %></span>
           <div>
             <h2><%= device.name %></h2>
             <div class="device-info">
+              <div><span>Local:</span> <%= device.location %></div>
               <div><span>MAC:</span> <%= device.mac_address %></div>
             </div>
           </div>
           <div class="card-actions">
             <a class="secondary-link" href="/device/<%= device.id %>/edit">Editar</a>
-            <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
+            <% if (device.external_url) { %>
+              <a class="device-action" href="<%= device.external_url %>" target="_blank" rel="noopener noreferrer">Acessar</a>
+            <% } else { %>
+              <button type="button" disabled title="A rota para ligar este dispositivo sera definida depois">Ligar</button>
+            <% } %>
           </div>
         </article>
       <% }) %>

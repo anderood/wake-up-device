@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Editar Dispositivo</title>
+  <title>Adicionar Dispositivo</title>
   <style>
     :root {
       color-scheme: dark;
@@ -14,6 +14,10 @@
 
     * {
       box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none;
     }
 
     body {
@@ -41,6 +45,14 @@
     p {
       margin: 0;
       color: #94a3b8;
+    }
+
+    .error {
+      padding: 12px 14px;
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      border-radius: 12px;
+      background: rgba(127, 29, 29, 0.35);
+      color: #fecaca;
     }
 
     form {
@@ -123,38 +135,70 @@
   <main>
     <header>
       <h1>Adicionar Dispositivo</h1>
-      <p>Adicione um novo Dispositivo.</p>
+      <p>Cadastre um dispositivo da sua rede local.</p>
     </header>
 
-    <form method="post" action="/device/1/update">
+    <form method="post" action="/add">
+      <% if (error) { %>
+        <p class="error" role="alert"><%= error %></p>
+      <% } %>
+
       <label>
         Nome
-        <input type="text" name="name" value="TV da Sala" required>
+        <input type="text" name="name" value="<%= values.name %>" maxlength="20" required autofocus>
       </label>
 
       <label>
         Tipo
-        <select name="type" required>
-          <option value="TV" selected>TV</option>
-          <option value="Computador">Computador</option>
-        </select>
+        <input type="text" name="type" value="<%= values.type %>" maxlength="20" placeholder="Ex.: TV, computador ou console" required>
       </label>
 
       <label>
         Local
-        <input type="text" name="location" value="Sala" required>
+        <input type="text" name="location" value="<%= values.location %>" maxlength="50" placeholder="Ex.: Quarto, sala ou cozinha" required>
       </label>
 
       <label>
         Endereco MAC
-        <input type="text" name="macAddress" value="00:11:22:33:44:55" required>
+        <input type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF" required>
+      </label>
+
+      <label>
+        Link externo?
+        <select id="hasExternalLink" name="hasExternalLink" required>
+          <option value="no" <%= values.hasExternalLink === "no" ? "selected" : "" %>>Nao</option>
+          <option value="yes" <%= values.hasExternalLink === "yes" ? "selected" : "" %>>Sim</option>
+        </select>
+      </label>
+
+      <label id="externalUrlField" <%= values.hasExternalLink === "yes" ? "" : "hidden" %>>
+        Link
+        <input id="externalUrl" type="url" name="externalUrl" value="<%= values.externalUrl %>" maxlength="2048" placeholder="https://exemplo.com" <%= values.hasExternalLink === "yes" ? "required" : "disabled" %>>
       </label>
 
       <div class="actions">
         <a href="/">Cancelar</a>
-        <button type="submit">Salvar alteracoes</button>
+        <button type="submit">Cadastrar dispositivo</button>
       </div>
     </form>
   </main>
+  <script>
+    const hasExternalLink = document.querySelector("#hasExternalLink");
+    const externalUrlField = document.querySelector("#externalUrlField");
+    const externalUrl = document.querySelector("#externalUrl");
+
+    function updateExternalUrlField() {
+      const enabled = hasExternalLink.value === "yes";
+      externalUrlField.hidden = !enabled;
+      externalUrl.disabled = !enabled;
+      externalUrl.required = enabled;
+
+      if (!enabled) {
+        externalUrl.value = "";
+      }
+    }
+
+    hasExternalLink.addEventListener("change", updateExternalUrlField);
+  </script>
 </body>
 </html>

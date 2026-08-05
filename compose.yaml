@@ -1,19 +1,32 @@
+x-app: &app
+  image: wake-up-device-app
+  build:
+    context: .
+  environment:
+    DB_HOST: database
+    DB_USER: root
+    DB_PASSWORD: ${DB_PASSWORD:-wake_up_device}
+    DB_DATABASE: ${DB_DATABASE:-wake_up_device}
+    DB_PORT: 3306
+
 services:
   app:
-    build:
-      context: .
-    environment:
-      DB_HOST: database
-      DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-wake_up_device}
-      DB_DATABASE: ${DB_DATABASE:-wake_up_device}
-      DB_PORT: 3306
+    <<: *app
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
       database:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
+
+  migrate:
+    <<: *app
+    command: npm run db:migrate
+    depends_on:
+      database:
+        condition: service_healthy
 
   database:
     image: mysql:8.4
