@@ -19,7 +19,7 @@ type DeviceValues = {
     name: string;
     type: string;
     location: string;
-    mac_address: string;
+    mac_address: string | null;
     ip_address: string | null;
     external_url: string | null;
 };
@@ -64,7 +64,7 @@ function getDeviceFormValues(req: Request): DeviceFormValues {
 }
 
 function validateDeviceForm(values: DeviceFormValues): { error: string } | { data: DeviceValues } {
-    if ([values.name, values.type, values.location, values.macAddress].some((field) => field.length === 0)) {
+    if ([values.name, values.type, values.location].some((field) => field.length === 0)) {
         return { error: "Preencha todos os campos obrigatorios." };
     }
 
@@ -76,10 +76,18 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
         return { error: "Um ou mais campos excedem o tamanho permitido." };
     }
 
-    const normalizedMacAddress = values.macAddress.toUpperCase().replaceAll("-", ":");
+    let macAddress: string | null = null;
 
-    if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(normalizedMacAddress)) {
-        return { error: "Informe um endereco MAC valido, como AA:BB:CC:DD:EE:FF." };
+    if (values.hasExternalLink === "no") {
+        if (values.macAddress.length === 0) {
+            return { error: "Informe o endereco MAC do dispositivo." };
+        }
+
+        macAddress = values.macAddress.toUpperCase().replaceAll("-", ":");
+
+        if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(macAddress)) {
+            return { error: "Informe um endereco MAC valido, como AA:BB:CC:DD:EE:FF." };
+        }
     }
 
     if (values.ipAddress.length > 0 && !isIPv4(values.ipAddress)) {
@@ -115,7 +123,7 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
             name: values.name,
             type: values.type,
             location: values.location,
-            mac_address: normalizedMacAddress,
+            mac_address: macAddress,
             ip_address: values.ipAddress || null,
             external_url: externalUrl
         }

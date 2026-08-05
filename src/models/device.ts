@@ -30,7 +30,7 @@ const devices = database.define(
         },
         mac_address:{
             type: Sequelize.CHAR(20),
-            allowNull: false,
+            allowNull: true,
             unique: true
         },
         ip_address: {

@@ -367,7 +367,9 @@
             <h2><%= device.name %></h2>
             <div class="device-info">
               <div><span>Local:</span> <%= device.location %></div>
-              <div><span>MAC:</span> <%= device.mac_address %></div>
+              <% if (!device.external_url && device.mac_address) { %>
+                <div><span>MAC:</span> <%= device.mac_address %></div>
+              <% } %>
               <% if (device.ip_address) { %>
                 <div><span>IPv4:</span> <%= device.ip_address %></div>
               <% } %>
