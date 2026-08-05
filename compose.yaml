@@ -11,8 +11,7 @@ x-app: &app
 services:
   app:
     <<: *app
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    network_mode: host
     depends_on:
       migrate:
         condition: service_completed_successfully

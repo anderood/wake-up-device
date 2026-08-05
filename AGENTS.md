@@ -165,8 +165,9 @@ Important schema behavior:
 - `DB_STORAGE` configures the SQLite file path and defaults locally to
   `wake-up-device.sqlite`.
 - `WOL_BROADCAST_ADDRESS` configures the Wake-on-LAN broadcast target.
-- `APP_PORT` is consumed only by Docker Compose to publish container port
-  `3000`; it does not change the Express listener.
+- The Docker `app` service runs with `network_mode: host` so Wake-on-LAN
+  broadcasts leave the host's network interface directly instead of staying
+  inside Docker's bridge network. It listens on host port `3000`.
 - Compose stores `/data/wake-up-device.sqlite` in the `sqlite-data` volume and
   waits for successful migrations before starting the application service.
 
