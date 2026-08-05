@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      DB_HOST: database
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-wake_up_device}
+      DB_DATABASE: ${DB_DATABASE:-wake_up_device}
+      DB_PORT: 3306
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  database:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-wake_up_device}
+      MYSQL_DATABASE: ${DB_DATABASE:-wake_up_device}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  mysql-data:

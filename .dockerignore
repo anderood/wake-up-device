@@ -1,0 +1,9 @@
+.git
+.idea
+.env
+node_modules
+dist
+npm-debug.log
+Dockerfile*
+compose*.yaml
+README.md
