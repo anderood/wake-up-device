@@ -24,7 +24,7 @@ const devices = database.define(
             allowNull: false,
             defaultValue: "Nao informado"
         },
-        external_url: {
+        local_url: {
             type: Sequelize.STRING(2048),
             allowNull: true
         },

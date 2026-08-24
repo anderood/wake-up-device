@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuracoes</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #111827 55%, #1e293b 100%);
+    }
+
+    main {
+      width: min(720px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 0;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .error,
+    .success-message {
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+
+    .error {
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      background: rgba(127, 29, 29, 0.35);
+      color: #fecaca;
+    }
+
+    .success-message {
+      border: 1px solid rgba(74, 222, 128, 0.4);
+      background: rgba(20, 83, 45, 0.35);
+      color: #bbf7d0;
+    }
+
+    form {
+      display: grid;
+      gap: 18px;
+      padding: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.72);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: #cbd5e1;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #e5e7eb;
+      font: inherit;
+    }
+
+    .field-help {
+      font-size: 0.9rem;
+      font-weight: 400;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    button,
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    button {
+      border: 0;
+      background: #2563eb;
+      cursor: pointer;
+    }
+
+    a {
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100% - 24px, 720px);
+        padding: 28px 0;
+      }
+
+      .actions {
+        flex-direction: column-reverse;
+      }
+
+      button,
+      a {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Configuracoes</h1>
+      <p>Defina o endereco usado para acessar os servicos fora da rede local.</p>
+    </header>
+
+    <form method="post" action="/settings">
+      <% if (error) { %>
+        <p class="error" role="alert"><%= error %></p>
+      <% } %>
+
+      <% if (updated) { %>
+        <p class="success-message" role="status">Configuracoes salvas com sucesso.</p>
+      <% } %>
+
+      <label>
+        Endereco IPv4 externo
+        <input
+          type="text"
+          name="externalIpAddress"
+          value="<%= values.externalIpAddress %>"
+          maxlength="15"
+          inputmode="decimal"
+          pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])"
+          placeholder="100.20.10.123"
+          aria-describedby="externalIpHelp"
+          required
+          autofocus
+        >
+        <span class="field-help" id="externalIpHelp">A porta e o caminho continuarao sendo obtidos do link local de cada card.</span>
+      </label>
+
+      <div class="actions">
+        <a href="/">Cancelar</a>
+        <button type="submit">Salvar configuracoes</button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

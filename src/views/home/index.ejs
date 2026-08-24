@@ -40,6 +40,11 @@
       margin-bottom: 32px;
     }
 
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
     h1 {
       margin: 0 0 8px;
       font-size: clamp(2rem, 5vw, 3.5rem);
@@ -242,6 +247,16 @@
       margin-top: auto;
     }
 
+    .access-card-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .access-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
     .card-actions .wake-button,
     .card-actions .device-action,
     .card-actions .secondary-link {
@@ -348,7 +363,12 @@
         flex-direction: column;
       }
 
-      .primary-link {
+      .header-actions {
+        flex-direction: column-reverse;
+        width: 100%;
+      }
+
+      .header-actions a {
         width: 100%;
       }
 
@@ -381,7 +401,10 @@
         <h1>Dispositivos</h1>
         <p>Gerencie os dispositivos cadastrados da sua rede interna.</p>
       </div>
-      <a class="primary-link" href="/add/create">Adicionar dispositivo</a>
+      <div class="header-actions">
+        <a class="secondary-link" href="/settings">Configuracoes</a>
+        <a class="primary-link" href="/add/create">Adicionar dispositivo</a>
+      </div>
     </header>
 
     <form class="search-form" action="/" method="get" role="search">
@@ -424,7 +447,7 @@
             <h2><%= device.name %></h2>
             <div class="device-info">
               <div><span>Local:</span> <%= device.location %></div>
-              <% if (!device.external_url && device.mac_address) { %>
+              <% if (!device.local_url && device.mac_address) { %>
                 <div><span>MAC:</span> <%= device.mac_address %></div>
               <% } %>
               <% if (device.ip_address) { %>
@@ -432,10 +455,15 @@
               <% } %>
             </div>
           </div>
-          <div class="card-actions">
+          <div class="card-actions<%= device.local_url ? " access-card-actions" : "" %>">
             <a class="secondary-link" href="/device/<%= device.id %>/edit">Editar</a>
-            <% if (device.external_url) { %>
-              <a class="device-action" href="<%= device.external_url %>" target="_blank" rel="noopener noreferrer">Acessar</a>
+            <% if (device.local_url) { %>
+              <div class="access-links">
+                <a class="device-action" href="<%= device.local_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo link local">Local</a>
+                <% if (device.external_access_url) { %>
+                  <a class="device-action" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo link externo">Externo</a>
+                <% } %>
+              </div>
             <% } else { %>
               <button class="wake-button" type="button" data-device-id="<%= device.id %>">Ligar</button>
               <p class="wake-status" role="status" aria-live="polite" hidden></p>

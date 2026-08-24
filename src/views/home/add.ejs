@@ -164,21 +164,21 @@
       </label>
 
       <label>
-        Link externo?
-        <select id="hasExternalLink" name="hasExternalLink" required>
-          <option value="no" <%= values.hasExternalLink === "no" ? "selected" : "" %>>Nao</option>
-          <option value="yes" <%= values.hasExternalLink === "yes" ? "selected" : "" %>>Sim</option>
+        Acao Acessar?
+        <select id="hasAccessLink" name="hasAccessLink" required>
+          <option value="no" <%= values.hasAccessLink === "no" ? "selected" : "" %>>Nao</option>
+          <option value="yes" <%= values.hasAccessLink === "yes" ? "selected" : "" %>>Sim</option>
         </select>
       </label>
 
-      <label id="externalUrlField" <%= values.hasExternalLink === "yes" ? "" : "hidden" %>>
-        Link
-        <input id="externalUrl" type="url" name="externalUrl" value="<%= values.externalUrl %>" maxlength="2048" placeholder="https://exemplo.com" <%= values.hasExternalLink === "yes" ? "required" : "disabled" %>>
+      <label id="localUrlField" <%= values.hasAccessLink === "yes" ? "" : "hidden" %>>
+        Link local
+        <input id="localUrl" type="url" name="localUrl" value="<%= values.localUrl %>" maxlength="2048" placeholder="http://192.168.1.10:8080" <%= values.hasAccessLink === "yes" ? "required" : "disabled" %>>
       </label>
 
-      <label id="macAddressField" <%= values.hasExternalLink === "yes" ? "hidden" : "" %>>
+      <label id="macAddressField" <%= values.hasAccessLink === "yes" ? "hidden" : "" %>>
         Endereco MAC
-        <input id="macAddress" type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF" <%= values.hasExternalLink === "yes" ? "disabled" : "required" %>>
+        <input id="macAddress" type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF" <%= values.hasAccessLink === "yes" ? "disabled" : "required" %>>
       </label>
 
       <div class="actions">
@@ -188,28 +188,28 @@
     </form>
   </main>
   <script>
-    const hasExternalLink = document.querySelector("#hasExternalLink");
+    const hasAccessLink = document.querySelector("#hasAccessLink");
     const macAddressField = document.querySelector("#macAddressField");
     const macAddress = document.querySelector("#macAddress");
-    const externalUrlField = document.querySelector("#externalUrlField");
-    const externalUrl = document.querySelector("#externalUrl");
+    const localUrlField = document.querySelector("#localUrlField");
+    const localUrl = document.querySelector("#localUrl");
 
-    function updateExternalUrlField() {
-      const enabled = hasExternalLink.value === "yes";
+    function updateLocalUrlField() {
+      const enabled = hasAccessLink.value === "yes";
       macAddressField.hidden = enabled;
       macAddress.disabled = enabled;
       macAddress.required = !enabled;
-      externalUrlField.hidden = !enabled;
-      externalUrl.disabled = !enabled;
-      externalUrl.required = enabled;
+      localUrlField.hidden = !enabled;
+      localUrl.disabled = !enabled;
+      localUrl.required = enabled;
 
       if (!enabled) {
-        externalUrl.value = "";
+        localUrl.value = "";
       }
     }
 
-    hasExternalLink.addEventListener("change", updateExternalUrlField);
-    updateExternalUrlField();
+    hasAccessLink.addEventListener("change", updateLocalUrlField);
+    updateLocalUrlField();
   </script>
 </body>
 </html>
