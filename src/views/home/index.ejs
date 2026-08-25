@@ -209,107 +209,62 @@
       color: #94a3b8;
     }
 
-    .card-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      gap: 10px;
+    .wake-button {
+      width: 100%;
       margin-top: auto;
-    }
-
-    .card-icon-action,
-    .wake-button {
-      display: inline-grid;
-      place-items: center;
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
-      padding: 0;
+      padding: 12px 16px;
+      border: 0;
       border-radius: 12px;
-      color: #ffffff;
-      cursor: pointer;
-      transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
-    }
-
-    .card-icon-action {
-      text-decoration: none;
-    }
-
-    .card-icon-action svg,
-    .wake-button svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    .card-icon-action:hover,
-    .wake-button:hover:not(:disabled) {
-      transform: translateY(-2px);
-    }
-
-    .card-icon-action:focus-visible,
-    .wake-button:focus-visible {
-      outline: 3px solid rgba(147, 197, 253, 0.55);
-      outline-offset: 2px;
-    }
-
-    .card-icon-action--edit {
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: rgba(15, 23, 42, 0.7);
-      color: #cbd5e1;
-    }
-
-    .card-icon-action--edit:hover {
-      border-color: rgba(148, 163, 184, 0.6);
-      background: rgba(51, 65, 85, 0.75);
-    }
-
-    .card-icon-action--local {
-      border: 1px solid #2563eb;
       background: #2563eb;
-    }
-
-    .card-icon-action--local:hover {
-      background: #1d4ed8;
-    }
-
-    .card-icon-action--external {
-      border: 1px solid #7c3aed;
-      background: #7c3aed;
-    }
-
-    .card-icon-action--external:hover {
-      background: #6d28d9;
-    }
-
-    .wake-button {
-      border: 1px solid #16a34a;
-      background: #16a34a;
+      color: #ffffff;
       font: inherit;
-    }
-
-    .wake-button:hover:not(:disabled) {
-      background: #15803d;
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .wake-button:disabled {
       cursor: wait;
-      opacity: 0.75;
+      opacity: 0.7;
     }
 
-    .wake-button:disabled svg {
-      animation: power-pulse 900ms ease-in-out infinite alternate;
+    .device-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
     }
 
-    @keyframes power-pulse {
-      to {
-        opacity: 0.35;
-        transform: scale(0.82);
-      }
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .access-card-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .access-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .card-actions .wake-button,
+    .card-actions .device-action,
+    .card-actions .secondary-link {
+      width: 100%;
     }
 
     .wake-status {
-      flex: 1 0 100%;
+      grid-column: 1 / -1;
       line-height: 1.45;
     }
 
@@ -500,38 +455,17 @@
               <% } %>
             </div>
           </div>
-          <div class="card-actions">
-            <a class="card-icon-action card-icon-action--edit" href="/device/<%= device.id %>/edit" aria-label="Editar <%= device.name %>" title="Editar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                <path d="M4 20h4.5L19 9.5a2.1 2.1 0 0 0-3-3L5.5 17 4 20Z"></path>
-                <path d="m14.5 8 3 3"></path>
-              </svg>
-            </a>
+          <div class="card-actions<%= device.local_url ? " access-card-actions" : "" %>">
+            <a class="secondary-link" href="/device/<%= device.id %>/edit">Editar</a>
             <% if (device.local_url) { %>
-              <a class="card-icon-action card-icon-action--local" href="<%= device.local_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo link local" title="Acessar link local">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                  <path d="m3 11 9-8 9 8"></path>
-                  <path d="M5 10v10h14V10"></path>
-                  <path d="M9 20v-6h6v6"></path>
-                </svg>
-              </a>
-              <% if (device.external_access_url) { %>
-                <a class="card-icon-action card-icon-action--external" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo link externo" title="Acessar link externo">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <path d="M3 12h18"></path>
-                    <path d="M12 3a15 15 0 0 1 0 18"></path>
-                    <path d="M12 3a15 15 0 0 0 0 18"></path>
-                  </svg>
-                </a>
-              <% } %>
+              <div class="access-links">
+                <a class="device-action" href="<%= device.local_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo link local">Local</a>
+                <% if (device.external_access_url) { %>
+                  <a class="device-action" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo link externo">Externo</a>
+                <% } %>
+              </div>
             <% } else { %>
-              <button class="wake-button" type="button" data-device-id="<%= device.id %>" aria-label="Ligar <%= device.name %>" title="Ligar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                  <path d="M12 2v10"></path>
-                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
-                </svg>
-              </button>
+              <button class="wake-button" type="button" data-device-id="<%= device.id %>">Ligar</button>
               <p class="wake-status" role="status" aria-live="polite" hidden></p>
             <% } %>
           </div>
@@ -617,12 +551,8 @@
           return;
         }
 
-        const defaultLabel = button.getAttribute("aria-label") || "Ligar dispositivo";
-        const defaultTitle = button.title || "Ligar";
         button.disabled = true;
-        button.setAttribute("aria-busy", "true");
-        button.setAttribute("aria-label", "Enviando pacote Wake-on-LAN");
-        button.title = "Enviando...";
+        button.textContent = "Enviando...";
         status.hidden = false;
         status.dataset.state = "";
         status.textContent = "Enviando pacote Wake-on-LAN...";
@@ -648,8 +578,7 @@
             return;
           }
 
-          button.setAttribute("aria-label", "Aguardando o dispositivo responder");
-          button.title = "Aguardando...";
+          button.textContent = "Aguardando...";
           status.textContent = "Pacote enviado. Aguardando o dispositivo responder...";
 
           if (await waitUntilOnline(deviceId)) {
@@ -666,9 +595,7 @@
             : "Nao foi possivel acordar o dispositivo. Tente novamente.";
         } finally {
           button.disabled = false;
-          button.removeAttribute("aria-busy");
-          button.setAttribute("aria-label", defaultLabel);
-          button.title = defaultTitle;
+          button.textContent = "Ligar";
         }
       });
     });
