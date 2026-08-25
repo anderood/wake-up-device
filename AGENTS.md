@@ -9,8 +9,9 @@ agents working on Wake Up Device.
 - Language: strict TypeScript executed directly by Node in ESM mode.
 - Web framework: Express 5.
 - Server-rendered UI: EJS templates with native HTML forms.
-- Browser layer: inline vanilla JavaScript and CSS inside the EJS views. There
-  is no frontend framework, static asset pipeline, bundler, or CSS framework.
+- Browser layer: inline vanilla JavaScript and CSS inside the EJS views, plus
+  Font Awesome Free CSS and webfonts served from the installed package. There is
+  no frontend framework, static asset pipeline, bundler, or CSS framework.
 - Database: SQLite through Sequelize 6 and the native `sqlite3` driver.
 - Migrations: Umzug with Sequelize storage.
 - Network operations: `wake_on_lan` for UDP magic packets and the system `ping`
@@ -29,12 +30,12 @@ agents working on Wake Up Device.
 
 ## Project Structure
 
-- `server.ts`: Express entrypoint, EJS configuration, form body parser, route
-  mounting, and port `3000` listener.
+- `server.ts`: Express entrypoint, EJS configuration, Font Awesome static asset
+  mounts, form body parser, route mounting, and port `3000` listener.
 - `src/router/web.ts`: browser-facing routes mounted at `/`.
 - `src/router/routes.ts`: API routes mounted at `/api`.
-- `src/controllers/home.controller.ts`: device CRUD, validation, Wake-on-LAN,
-  and ping request handling.
+- `src/controllers/home.controller.ts`: device CRUD, validation, local and
+  external access URL generation, Wake-on-LAN, and ping request handling.
 - `src/controllers/api.controller.ts`: current API welcome response.
 - `src/models/device.ts`: Sequelize model for the `devices` table.
 - `src/database/database.ts`: Sequelize/SQLite connection using `DB_STORAGE`.
@@ -78,27 +79,23 @@ or soft-delete behavior.
   `application/x-www-form-urlencoded` requests.
 - Create and edit views duplicate their markup and inline script; there is no
   shared form partial at present.
-- Form fields appear in this order: `name`, `type`, `location`, `ipAddress`,
-  `hasExternalLink`, then the conditional `externalUrl` or `macAddress` field.
-- `hasExternalLink` uses string values `yes` and `no`.
-- When `hasExternalLink` is `yes`, browser JavaScript displays and requires
-  `externalUrl`, while hiding and disabling `macAddress`.
-- When `hasExternalLink` is `no`, browser JavaScript displays and requires
-  `macAddress`, while hiding and disabling `externalUrl`.
-- Disabled conditional inputs are not submitted. Server validation must remain
-  authoritative and must not rely only on HTML attributes or browser scripts.
+- Form fields appear in this order: `name`, `type`, `location`,
+  `localIpAddress`, `externalIpAddress`, `accessPort`, and `macAddress`.
+- Local IP, external IP, and MAC are independent and optional.
+- Browser JavaScript requires `accessPort` when either IP field is populated.
+  Server validation remains authoritative and enforces the same relationship.
 - Validation errors render the same form with HTTP `422`, an error message, and
   the submitted values preserved.
 - The controller trims all form strings and maps camelCase form names to
   snake_case database columns.
 - Names and types are required with a maximum length of 20. Location is required
   with a maximum length of 50.
-- An optional IP must be a valid IPv4 address.
+- Optional local and external addresses must be valid IPv4 addresses.
+- The shared access port must be an integer from 1 to 65535 and is required
+  whenever either access address is configured. A port without an IP is invalid.
 - MAC addresses accept colon or hyphen separators, are normalized to uppercase
   colon notation, and must match `AA:BB:CC:DD:EE:FF`.
-- External URLs have a maximum length of 2048 and must use HTTP or HTTPS.
-- Application validation enforces one destination mode: a device stores either
-  an external URL or a MAC address according to `hasExternalLink`.
+- A device may store any combination of MAC, local IPv4, and external IPv4.
 
 ## Database Schema
 
@@ -110,15 +107,16 @@ The application currently uses one table, `devices`:
 | `name` | `VARCHAR(20)` | No | None | Required display name |
 | `type` | `VARCHAR(20)` | Yes | None | Required by controller validation |
 | `location` | `VARCHAR(50)` | No | `Nao informado` | Required device location |
-| `external_url` | `VARCHAR(2048)` | Yes | None | HTTP/HTTPS destination for external items |
 | `mac_address` | `VARCHAR(20)` | Yes | Unique when non-null | Wake-on-LAN destination |
-| `ip_address` | `VARCHAR(15)` | Yes | None | Optional IPv4 used for reachability checks |
+| `ip_address` | `VARCHAR(15)` | Yes | None | Local IPv4 used for access and reachability checks |
+| `external_ip_address` | `VARCHAR(15)` | Yes | None | External IPv4 used for access |
+| `access_port` | `INTEGER` | Yes | None | Shared TCP port for local and external access links |
 | `status` | `INTEGER` | No | `1` | Only rows with value `1` are listed and editable |
 
 Important schema behavior:
 
-- The database does not have a check constraint enforcing the external URL/MAC
-  choice; this invariant is enforced in `validateDeviceForm`.
+- The database does not have check constraints for the IP/port relationship;
+  this invariant is enforced in `validateDeviceForm`.
 - Multiple `NULL` MAC values are allowed by SQLite's unique index behavior.
 - The Sequelize model disables `createdAt` and `updatedAt`; the table has no
   timestamp columns.
@@ -140,7 +138,7 @@ Important schema behavior:
 - A successful wake response confirms only packet transmission, not that the
   target powered on.
 - The wake endpoint reports whether ping confirmation is available from the
-  stored optional IPv4 address.
+  stored optional local IPv4 address.
 - The browser polls the ping endpoint every two seconds for up to 60 seconds.
 - `pingIpv4` validates the address before invoking `ping -c 1 -W 1`, applies a
   two-second process timeout, and reuses an in-flight check for the same address.
@@ -151,10 +149,15 @@ Important schema behavior:
 ## View Behavior
 
 - `index.ejs` displays only database-backed device values escaped by EJS.
-- External devices omit MAC details and receive an `Acessar` link with
-  `target="_blank"` and `rel="noopener noreferrer"`.
-- MAC devices receive a `Ligar` button and optional online confirmation through
-  ping polling.
+- Cards independently show Font Awesome icon actions for `Ligar` when a MAC is
+  available, `Local` for a local IP and port, `Externo` for an external IP and
+  port, and `Editar` for every device.
+- Access links use `http://IP:port`, `target="_blank"`, and
+  `rel="noopener noreferrer"`.
+- Icon-only actions keep descriptive `aria-label` and `title` attributes. The
+  wake icon changes from `fa-power-off` to an animated `fa-spinner` while the
+  request and optional ping polling are in progress.
+- MAC devices receive optional online confirmation through local-IP ping polling.
 - Permanent deletion uses browser `fetch` after a confirmation dialog.
 - Keep pages functional on desktop and mobile and preserve the existing visual
   language unless a redesign is explicitly requested.
@@ -192,5 +195,4 @@ Important schema behavior:
   controls are added.
 - Continue using parameterized Sequelize operations rather than constructing SQL
   from request values.
-- Keep external links restricted to HTTP and HTTPS.
 - Validate route IDs and all network addresses on the server.

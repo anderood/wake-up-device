@@ -159,26 +159,23 @@
       </label>
 
       <label>
-        Endereco IPv4 (opcional)
-        <input type="text" name="ipAddress" value="<%= values.ipAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="192.168.1.10">
+        Endereco IPv4 local (opcional)
+        <input id="localIpAddress" type="text" name="localIpAddress" value="<%= values.localIpAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="192.168.1.6">
       </label>
 
       <label>
-        Link externo?
-        <select id="hasExternalLink" name="hasExternalLink" required>
-          <option value="no" <%= values.hasExternalLink === "no" ? "selected" : "" %>>Nao</option>
-          <option value="yes" <%= values.hasExternalLink === "yes" ? "selected" : "" %>>Sim</option>
-        </select>
+        Endereco IPv4 externo (opcional)
+        <input id="externalIpAddress" type="text" name="externalIpAddress" value="<%= values.externalIpAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="100.100.10.10">
       </label>
 
-      <label id="externalUrlField" <%= values.hasExternalLink === "yes" ? "" : "hidden" %>>
-        Link
-        <input id="externalUrl" type="url" name="externalUrl" value="<%= values.externalUrl %>" maxlength="2048" placeholder="https://exemplo.com" <%= values.hasExternalLink === "yes" ? "required" : "disabled" %>>
+      <label>
+        Porta de acesso (obrigatoria com IPv4)
+        <input id="accessPort" type="number" name="accessPort" value="<%= values.accessPort %>" min="1" max="65535" inputmode="numeric" placeholder="8080">
       </label>
 
-      <label id="macAddressField" <%= values.hasExternalLink === "yes" ? "hidden" : "" %>>
-        Endereco MAC
-        <input id="macAddress" type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF" <%= values.hasExternalLink === "yes" ? "disabled" : "required" %>>
+      <label>
+        Endereco MAC (opcional)
+        <input type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF">
       </label>
 
       <div class="actions">
@@ -188,28 +185,17 @@
     </form>
   </main>
   <script>
-    const hasExternalLink = document.querySelector("#hasExternalLink");
-    const macAddressField = document.querySelector("#macAddressField");
-    const macAddress = document.querySelector("#macAddress");
-    const externalUrlField = document.querySelector("#externalUrlField");
-    const externalUrl = document.querySelector("#externalUrl");
+    const localIpAddress = document.querySelector("#localIpAddress");
+    const externalIpAddress = document.querySelector("#externalIpAddress");
+    const accessPort = document.querySelector("#accessPort");
 
-    function updateExternalUrlField() {
-      const enabled = hasExternalLink.value === "yes";
-      macAddressField.hidden = enabled;
-      macAddress.disabled = enabled;
-      macAddress.required = !enabled;
-      externalUrlField.hidden = !enabled;
-      externalUrl.disabled = !enabled;
-      externalUrl.required = enabled;
-
-      if (!enabled) {
-        externalUrl.value = "";
-      }
+    function updateAccessPortRequirement() {
+      accessPort.required = Boolean(localIpAddress.value.trim() || externalIpAddress.value.trim());
     }
 
-    hasExternalLink.addEventListener("change", updateExternalUrlField);
-    updateExternalUrlField();
+    localIpAddress.addEventListener("input", updateAccessPortRequirement);
+    externalIpAddress.addEventListener("input", updateAccessPortRequirement);
+    updateAccessPortRequirement();
   </script>
 </body>
 </html>

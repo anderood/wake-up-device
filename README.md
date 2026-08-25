@@ -1,14 +1,16 @@
 # Wake Up Device
 
 Aplicacao web para cadastrar e gerenciar dispositivos da rede local. Ela permite
-ligar equipamentos por Wake-on-LAN ou abrir um link externo associado ao item.
+ligar equipamentos por Wake-on-LAN e abrir enderecos locais ou externos
+associados ao item.
 
 ## Funcionalidades
 
 - Cadastro, edicao e exclusao de dispositivos.
 - Envio de pacotes Wake-on-LAN para dispositivos cadastrados com endereco MAC.
-- Acesso direto a dispositivos e servicos cadastrados com link externo.
-- Endereco IPv4 opcional para verificar por ping se um dispositivo ficou online.
+- Acesso local e externo por IPv4 e porta configurados em cada dispositivo.
+- Endereco IPv4 local usado para verificar por ping se um dispositivo ficou online.
+- Acoes dos cards representadas por icones do Font Awesome carregados localmente.
 - Interface web responsiva renderizada no servidor.
 - Persistencia dos dados em um arquivo SQLite.
 
@@ -36,17 +38,19 @@ migracoes pendentes e somente depois inicia a aplicacao.
 
 ## Como usar
 
-Ao cadastrar ou editar um dispositivo, informe nome, tipo, local e, se
-disponivel, o endereco IPv4. Em seguida, escolha como o item deve funcionar:
+Ao cadastrar ou editar um dispositivo, nome, tipo e local sao obrigatorios. Os
+destinos abaixo sao opcionais e podem ser usados ao mesmo tempo:
 
-- Se **Link externo** for **Sim**, informe uma URL iniciada por `http://` ou
-  `https://`. O item recebera a acao **Acessar**.
-- Se **Link externo** for **Nao**, informe o endereco MAC. O item recebera a
-  acao **Ligar** para enviar um pacote Wake-on-LAN.
+- **Endereco IPv4 local**: adiciona a acao **Local** e e usado na confirmacao
+  por ping depois do Wake-on-LAN.
+- **Endereco IPv4 externo**: adiciona a acao **Externo**.
+- **Porta de acesso**: e compartilhada pelos enderecos local e externo e passa
+  a ser obrigatoria quando pelo menos um deles e informado.
+- **Endereco MAC**: adiciona a acao **Ligar** para enviar Wake-on-LAN.
 
-O endereco IPv4 nao e obrigatorio. Quando ele estiver configurado, a aplicacao
-tentara confirmar por ping se o dispositivo ficou online depois do envio do
-pacote Wake-on-LAN.
+Por exemplo, os enderecos `192.168.1.6`, `100.100.10.10` e a porta `8080`
+geram os links `http://192.168.1.6:8080` e
+`http://100.100.10.10:8080`. Todas as acoes de acesso abrem uma nova aba.
 
 ## Configuracao
 
@@ -75,9 +79,9 @@ Docker. Prefira o broadcast dirigido da rede local e confirme que o firewall do
 host permite trafego UDP de saida na porta 9.
 
 O sucesso do envio confirma apenas que o pacote foi transmitido. Quando houver
-um IPv4 cadastrado, a interface fara tentativas de ping por ate 60 segundos. A
-falta de resposta nao prova que o dispositivo permaneceu desligado, pois ele
-pode bloquear ICMP.
+um IPv4 local cadastrado, a interface fara tentativas de ping por ate 60
+segundos. A falta de resposta nao prova que o dispositivo permaneceu desligado,
+pois ele pode bloquear ICMP.
 
 ## Desenvolvimento local
 

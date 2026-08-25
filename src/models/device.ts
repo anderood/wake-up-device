@@ -24,10 +24,6 @@ const devices = database.define(
             allowNull: false,
             defaultValue: "Nao informado"
         },
-        external_url: {
-            type: Sequelize.STRING(2048),
-            allowNull: true
-        },
         mac_address:{
             type: Sequelize.STRING(20),
             allowNull: true,
@@ -35,6 +31,14 @@ const devices = database.define(
         },
         ip_address: {
             type: Sequelize.STRING(15),
+            allowNull: true
+        },
+        external_ip_address: {
+            type: Sequelize.STRING(15),
+            allowNull: true
+        },
+        access_port: {
+            type: Sequelize.INTEGER,
             allowNull: true
         },
         status: {

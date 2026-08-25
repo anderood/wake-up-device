@@ -10,9 +10,9 @@ type DeviceFormValues = {
     type: string;
     location: string;
     macAddress: string;
-    ipAddress: string;
-    hasExternalLink: string;
-    externalUrl: string;
+    localIpAddress: string;
+    externalIpAddress: string;
+    accessPort: string;
 };
 
 type DeviceValues = {
@@ -21,7 +21,8 @@ type DeviceValues = {
     location: string;
     mac_address: string | null;
     ip_address: string | null;
-    external_url: string | null;
+    external_ip_address: string | null;
+    access_port: number | null;
 };
 
 const emptyDeviceForm: DeviceFormValues = {
@@ -29,9 +30,9 @@ const emptyDeviceForm: DeviceFormValues = {
     type: "",
     location: "",
     macAddress: "",
-    ipAddress: "",
-    hasExternalLink: "no",
-    externalUrl: ""
+    localIpAddress: "",
+    externalIpAddress: "",
+    accessPort: ""
 };
 
 function parseDeviceId(value: unknown): number | null {
@@ -57,9 +58,9 @@ function getDeviceFormValues(req: Request): DeviceFormValues {
         type: value("type"),
         location: value("location"),
         macAddress: value("macAddress"),
-        ipAddress: value("ipAddress"),
-        hasExternalLink: value("hasExternalLink"),
-        externalUrl: value("externalUrl")
+        localIpAddress: value("localIpAddress") || value("ipAddress"),
+        externalIpAddress: value("externalIpAddress"),
+        accessPort: value("accessPort")
     };
 }
 
@@ -68,21 +69,13 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
         return { error: "Preencha todos os campos obrigatorios." };
     }
 
-    if (values.hasExternalLink !== "yes" && values.hasExternalLink !== "no") {
-        return { error: "Informe se o dispositivo possui um link externo." };
-    }
-
     if (values.name.length > 20 || values.type.length > 20 || values.location.length > 50) {
         return { error: "Um ou mais campos excedem o tamanho permitido." };
     }
 
     let macAddress: string | null = null;
 
-    if (values.hasExternalLink === "no") {
-        if (values.macAddress.length === 0) {
-            return { error: "Informe o endereco MAC do dispositivo." };
-        }
-
+    if (values.macAddress.length > 0) {
         macAddress = values.macAddress.toUpperCase().replaceAll("-", ":");
 
         if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(macAddress)) {
@@ -90,31 +83,33 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
         }
     }
 
-    if (values.ipAddress.length > 0 && !isIPv4(values.ipAddress)) {
-        return { error: "Informe um endereco IPv4 valido, como 192.168.1.10." };
+    if (values.localIpAddress.length > 0 && !isIPv4(values.localIpAddress)) {
+        return { error: "Informe um endereco IPv4 local valido, como 192.168.1.6." };
     }
 
-    let externalUrl: string | null = null;
+    if (values.externalIpAddress.length > 0 && !isIPv4(values.externalIpAddress)) {
+        return { error: "Informe um endereco IPv4 externo valido, como 100.100.10.10." };
+    }
 
-    if (values.hasExternalLink === "yes") {
-        if (values.externalUrl.length === 0) {
-            return { error: "Informe o link externo do dispositivo." };
-        }
+    const hasAccessAddress = values.localIpAddress.length > 0 || values.externalIpAddress.length > 0;
+    let accessPort: number | null = null;
 
-        if (values.externalUrl.length > 2048) {
-            return { error: "O link externo excede o tamanho permitido." };
-        }
+    if (hasAccessAddress && values.accessPort.length === 0) {
+        return { error: "Informe a porta de acesso dos enderecos local e externo." };
+    }
 
-        try {
-            const parsedUrl = new URL(values.externalUrl);
+    if (!hasAccessAddress && values.accessPort.length > 0) {
+        return { error: "Informe um endereco IPv4 local ou externo para usar a porta de acesso." };
+    }
 
-            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-                return { error: "Informe um link iniciado por http:// ou https://." };
-            }
+    if (values.accessPort.length > 0) {
+        accessPort = Number(values.accessPort);
 
-            externalUrl = parsedUrl.toString();
-        } catch {
-            return { error: "Informe um link externo valido." };
+        if (!/^\d{1,5}$/.test(values.accessPort)
+            || !Number.isInteger(accessPort)
+            || accessPort < 1
+            || accessPort > 65_535) {
+            return { error: "Informe uma porta valida entre 1 e 65535." };
         }
     }
 
@@ -124,10 +119,24 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
             type: values.type,
             location: values.location,
             mac_address: macAddress,
-            ip_address: values.ipAddress || null,
-            external_url: externalUrl
+            ip_address: values.localIpAddress || null,
+            external_ip_address: values.externalIpAddress || null,
+            access_port: accessPort
         }
     };
+}
+
+function buildIpv4AccessUrl(ipAddress: unknown, accessPort: unknown): string | null {
+    if (typeof ipAddress !== "string"
+        || !isIPv4(ipAddress)
+        || typeof accessPort !== "number"
+        || !Number.isInteger(accessPort)
+        || accessPort < 1
+        || accessPort > 65_535) {
+        return null;
+    }
+
+    return `http://${ipAddress}:${accessPort}`;
 }
 
 export default class HomeController {
@@ -145,8 +154,18 @@ export default class HomeController {
         }
 
         const allDevices = await devices.findAll({ where });
+        const renderedDevices = allDevices.map((device) => {
+            const values = device.toJSON() as Record<string, unknown>;
+
+            return {
+                ...values,
+                local_access_url: buildIpv4AccessUrl(values.ip_address, values.access_port),
+                external_access_url: buildIpv4AccessUrl(values.external_ip_address, values.access_port)
+            };
+        });
+
         return res.render("home/index", {
-            devices: allDevices,
+            devices: renderedDevices,
             searchTerm,
             created: req.query.created === "1",
             updated: req.query.updated === "1"
@@ -208,17 +227,14 @@ export default class HomeController {
             }
 
             const storedValues = device.toJSON() as Record<string, unknown>;
-            const externalUrl = typeof storedValues.external_url === "string"
-                ? storedValues.external_url
-                : "";
             const values: DeviceFormValues = {
                 name: String(storedValues.name ?? ""),
                 type: String(storedValues.type ?? ""),
                 location: String(storedValues.location ?? ""),
                 macAddress: String(storedValues.mac_address ?? ""),
-                ipAddress: String(storedValues.ip_address ?? ""),
-                hasExternalLink: externalUrl ? "yes" : "no",
-                externalUrl
+                localIpAddress: String(storedValues.ip_address ?? ""),
+                externalIpAddress: String(storedValues.external_ip_address ?? ""),
+                accessPort: String(storedValues.access_port ?? "")
             };
 
             return res.render("home/edit", { deviceId, error: null, values });
@@ -326,7 +342,7 @@ export default class HomeController {
 
             if (typeof ipAddress !== "string" || !isIPv4(ipAddress)) {
                 return res.status(422).json({
-                    error: "Dispositivo sem endereco IPv4 configurado."
+                    error: "Dispositivo sem endereco IPv4 local configurado."
                 });
             }
 

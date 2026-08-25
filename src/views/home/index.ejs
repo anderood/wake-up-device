@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dispositivos</title>
+  <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
   <style>
     :root {
       color-scheme: dark;
@@ -105,8 +106,7 @@
       cursor: pointer;
     }
 
-    .primary-link,
-    .secondary-link {
+    .primary-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -115,15 +115,7 @@
       color: #ffffff;
       font-weight: 700;
       text-decoration: none;
-    }
-
-    .primary-link {
       background: #2563eb;
-    }
-
-    .secondary-link {
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: rgba(15, 23, 42, 0.7);
     }
 
     .device-grid {
@@ -204,52 +196,92 @@
       color: #94a3b8;
     }
 
-    .wake-button {
-      width: 100%;
-      margin-top: auto;
-      padding: 12px 16px;
-      border: 0;
-      border-radius: 12px;
-      background: #2563eb;
-      color: #ffffff;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .wake-button:disabled {
-      cursor: wait;
-      opacity: 0.7;
-    }
-
-    .device-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
     .card-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 10px;
       margin-top: auto;
     }
 
-    .card-actions .wake-button,
-    .card-actions .device-action,
-    .card-actions .secondary-link {
-      width: 100%;
+    .card-icon-action,
+    .wake-button {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font: inherit;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+    }
+
+    .card-icon-action {
+      text-decoration: none;
+    }
+
+    .card-icon-action:hover,
+    .wake-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .card-icon-action:focus-visible,
+    .wake-button:focus-visible {
+      outline: 3px solid rgba(147, 197, 253, 0.55);
+      outline-offset: 2px;
+    }
+
+    .card-icon-action--edit {
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: rgba(15, 23, 42, 0.7);
+      color: #cbd5e1;
+    }
+
+    .card-icon-action--edit:hover {
+      border-color: rgba(148, 163, 184, 0.6);
+      background: rgba(51, 65, 85, 0.75);
+    }
+
+    .wake-button {
+      border: 1px solid #16a34a;
+      background: #16a34a;
+    }
+
+    .wake-button:hover:not(:disabled) {
+      background: #15803d;
+    }
+
+    .wake-button:disabled {
+      cursor: wait;
+      opacity: 0.75;
+    }
+
+    .card-icon-action--local {
+      border: 1px solid #2563eb;
+      background: #2563eb;
+    }
+
+    .card-icon-action--local:hover {
+      background: #1d4ed8;
+    }
+
+    .card-icon-action--external {
+      border: 1px solid #7c3aed;
+      background: #7c3aed;
+    }
+
+    .card-icon-action--external:hover {
+      background: #6d28d9;
     }
 
     .wake-status {
-      grid-column: 1 / -1;
+      flex: 1 0 100%;
       line-height: 1.45;
     }
 
@@ -423,21 +455,41 @@
           <div>
             <h2><%= device.name %></h2>
             <div class="device-info">
-              <div><span>Local:</span> <%= device.location %></div>
-              <% if (!device.external_url && device.mac_address) { %>
+              <div><span>Localizacao:</span> <%= device.location %></div>
+              <% if (device.mac_address) { %>
                 <div><span>MAC:</span> <%= device.mac_address %></div>
               <% } %>
               <% if (device.ip_address) { %>
-                <div><span>IPv4:</span> <%= device.ip_address %></div>
+                <div><span>IPv4 local:</span> <%= device.ip_address %></div>
+              <% } %>
+              <% if (device.external_ip_address) { %>
+                <div><span>IPv4 externo:</span> <%= device.external_ip_address %></div>
+              <% } %>
+              <% if (device.access_port && (device.ip_address || device.external_ip_address)) { %>
+                <div><span>Porta:</span> <%= device.access_port %></div>
               <% } %>
             </div>
           </div>
           <div class="card-actions">
-            <a class="secondary-link" href="/device/<%= device.id %>/edit">Editar</a>
-            <% if (device.external_url) { %>
-              <a class="device-action" href="<%= device.external_url %>" target="_blank" rel="noopener noreferrer">Acessar</a>
-            <% } else { %>
-              <button class="wake-button" type="button" data-device-id="<%= device.id %>">Ligar</button>
+            <a class="card-icon-action card-icon-action--edit" href="/device/<%= device.id %>/edit" aria-label="Editar <%= device.name %>" title="Editar <%= device.name %>">
+              <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            </a>
+            <% if (device.mac_address) { %>
+              <button class="wake-button" type="button" data-device-id="<%= device.id %>" data-device-name="<%= device.name %>" aria-label="Ligar <%= device.name %>" title="Ligar <%= device.name %>">
+                <i class="action-icon fa-solid fa-power-off" aria-hidden="true"></i>
+              </button>
+            <% } %>
+            <% if (device.local_access_url) { %>
+              <a class="card-icon-action card-icon-action--local" href="<%= device.local_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco local" title="Acessar <%= device.name %> pelo endereco local">
+                <i class="fa-solid fa-house" aria-hidden="true"></i>
+              </a>
+            <% } %>
+            <% if (device.external_access_url) { %>
+              <a class="card-icon-action card-icon-action--external" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco externo" title="Acessar <%= device.name %> pelo endereco externo">
+                <i class="fa-solid fa-globe" aria-hidden="true"></i>
+              </a>
+            <% } %>
+            <% if (device.mac_address) { %>
               <p class="wake-status" role="status" aria-live="polite" hidden></p>
             <% } %>
           </div>
@@ -517,17 +569,25 @@
     document.querySelectorAll(".wake-button").forEach((button) => {
       button.addEventListener("click", async () => {
         const deviceId = button.dataset.deviceId;
+        const deviceName = button.dataset.deviceName || "o dispositivo";
         const status = button.parentElement.querySelector(".wake-status");
+        const icon = button.querySelector(".action-icon");
 
-        if (!deviceId || !status) {
+        if (!deviceId || !status || !icon) {
           return;
         }
 
+        const defaultLabel = button.getAttribute("aria-label") || "Ligar dispositivo";
+        const defaultTitle = button.title || "Ligar dispositivo";
         button.disabled = true;
-        button.textContent = "Enviando...";
+        button.setAttribute("aria-busy", "true");
+        button.setAttribute("aria-label", `Enviando pacote Wake-on-LAN para ${deviceName}`);
+        button.title = `Enviando pacote Wake-on-LAN para ${deviceName}`;
+        icon.classList.remove("fa-power-off");
+        icon.classList.add("fa-spinner", "fa-spin");
         status.hidden = false;
         status.dataset.state = "";
-        status.textContent = "Enviando pacote Wake-on-LAN...";
+        status.textContent = `Enviando pacote Wake-on-LAN para ${deviceName}...`;
 
         try {
           const response = await fetch(`/device/${encodeURIComponent(deviceId)}/wake`, {
@@ -546,28 +606,34 @@
 
           if (result.canConfirm !== true) {
             status.dataset.state = "success";
-            status.textContent = "Pacote enviado. Cadastre um IPv4 para confirmar se o dispositivo ficou online.";
+            status.textContent = `Pacote enviado para ${deviceName}. Cadastre um IPv4 local para confirmar se o dispositivo ficou online.`;
             return;
           }
 
-          button.textContent = "Aguardando...";
-          status.textContent = "Pacote enviado. Aguardando o dispositivo responder...";
+          button.setAttribute("aria-label", `Aguardando ${deviceName} responder`);
+          button.title = `Aguardando ${deviceName} responder`;
+          status.textContent = `Pacote enviado para ${deviceName}. Aguardando o dispositivo responder...`;
 
           if (await waitUntilOnline(deviceId)) {
             status.dataset.state = "success";
-            status.textContent = "Dispositivo online.";
+            status.textContent = `${deviceName} esta online.`;
           } else {
             status.dataset.state = "warning";
-            status.textContent = "Pacote enviado, mas o dispositivo nao respondeu ao ping.";
+            status.textContent = `Pacote enviado para ${deviceName}, mas o dispositivo nao respondeu ao ping.`;
           }
         } catch (error) {
           status.dataset.state = "error";
-          status.textContent = error instanceof Error
+          const errorMessage = error instanceof Error
             ? error.message
             : "Nao foi possivel acordar o dispositivo. Tente novamente.";
+          status.textContent = `${deviceName}: ${errorMessage}`;
         } finally {
           button.disabled = false;
-          button.textContent = "Ligar";
+          button.removeAttribute("aria-busy");
+          button.setAttribute("aria-label", defaultLabel);
+          button.title = defaultTitle;
+          icon.classList.remove("fa-spinner", "fa-spin");
+          icon.classList.add("fa-power-off");
         }
       });
     });
