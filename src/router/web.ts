@@ -1,15 +1,11 @@
 import express from "express";
 import HomeController from "../controllers/home.controller.ts";
-import SettingsController from "../controllers/settings.controller.ts";
 
 const homeController = new HomeController();
-const settingsController = new SettingsController();
 
 const router = express.Router();
 
 router.get("/", homeController.index);
-router.get("/settings", settingsController.edit);
-router.post("/settings", settingsController.update);
 router.get("/add/create", homeController.create);
 router.post("/add", homeController.store);
 router.get("/device", homeController.show);

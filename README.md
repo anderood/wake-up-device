@@ -1,14 +1,13 @@
 # Wake Up Device
 
 Aplicacao web para cadastrar e gerenciar dispositivos da rede local. Ela permite
-ligar equipamentos por Wake-on-LAN ou abrir links locais e externos associados
-aos itens de acesso.
+ligar equipamentos por Wake-on-LAN ou abrir um link externo associado ao item.
 
 ## Funcionalidades
 
 - Cadastro, edicao e exclusao de dispositivos.
 - Envio de pacotes Wake-on-LAN para dispositivos cadastrados com endereco MAC.
-- Acesso local ou externo a dispositivos e servicos cadastrados com link.
+- Acesso direto a dispositivos e servicos cadastrados com link externo.
 - Endereco IPv4 opcional para verificar por ping se um dispositivo ficou online.
 - Interface web responsiva renderizada no servidor.
 - Persistencia dos dados em um arquivo SQLite.
@@ -40,10 +39,9 @@ migracoes pendentes e somente depois inicia a aplicacao.
 Ao cadastrar ou editar um dispositivo, informe nome, tipo, local e, se
 disponivel, o endereco IPv4. Em seguida, escolha como o item deve funcionar:
 
-- Se **Acao Acessar** for **Sim**, informe o link local iniciado por `http://`
-  ou `https://`. O item recebera as opcoes **Local** e, quando configurada,
-  **Externo**.
-- Se **Acao Acessar** for **Nao**, informe o endereco MAC. O item recebera a
+- Se **Link externo** for **Sim**, informe uma URL iniciada por `http://` ou
+  `https://`. O item recebera a acao **Acessar**.
+- Se **Link externo** for **Nao**, informe o endereco MAC. O item recebera a
   acao **Ligar** para enviar um pacote Wake-on-LAN.
 
 O endereco IPv4 nao e obrigatorio. Quando ele estiver configurado, a aplicacao
@@ -51,21 +49,6 @@ tentara confirmar por ping se o dispositivo ficou online depois do envio do
 pacote Wake-on-LAN.
 
 ## Configuracao
-
-Use a opcao **Configuracoes** da pagina inicial para informar o endereco IPv4
-externo, como `100.20.10.123`. Ao montar o acesso externo, a aplicacao substitui
-somente o endereco do link local e preserva o protocolo, a porta, o caminho e os
-parametros. Por exemplo:
-
-```text
-Local:   http://192.168.1.10:8080/camera
-Externo: http://100.20.10.123:8080/camera
-```
-
-Sem um IPv4 externo configurado, os cards continuam exibindo somente a opcao
-**Local**.
-
-### Ambiente
 
 Copie os valores necessarios de `.env.example` para um arquivo `.env`:
 

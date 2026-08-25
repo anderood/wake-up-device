@@ -34,11 +34,9 @@ agents working on Wake Up Device.
 - `src/router/web.ts`: browser-facing routes mounted at `/`.
 - `src/router/routes.ts`: API routes mounted at `/api`.
 - `src/controllers/home.controller.ts`: device CRUD, validation, Wake-on-LAN,
-  ping request handling, and external access URL generation.
-- `src/controllers/settings.controller.ts`: global external IPv4 configuration.
+  and ping request handling.
 - `src/controllers/api.controller.ts`: current API welcome response.
 - `src/models/device.ts`: Sequelize model for the `devices` table.
-- `src/models/app-setting.ts`: Sequelize model for global application settings.
 - `src/database/database.ts`: Sequelize/SQLite connection using `DB_STORAGE`.
 - `src/database/migrate.ts`: Umzug runner.
 - `src/database/migrations/`: schema migrations, including initial table
@@ -51,7 +49,6 @@ agents working on Wake Up Device.
   delete flows.
 - `src/views/home/add.ejs`: create form.
 - `src/views/home/edit.ejs`: edit form.
-- `src/views/settings/index.ejs`: global external IPv4 settings form.
 - `compose.yaml`: application and migration service definitions plus the shared
   SQLite volume.
 
@@ -60,9 +57,6 @@ agents working on Wake Up Device.
 - `server.ts` enables `express.urlencoded({ extended: false })` for HTML form
   submissions. It does not enable `express.json()` or multipart parsing.
 - `GET /`: list active devices where `status = 1`.
-- `GET /settings`: render the global external IPv4 settings form.
-- `POST /settings`: validate and persist the global external IPv4, then redirect
-  to `/settings?updated=1`.
 - `GET /add/create`: render the create form.
 - `POST /add`: validate and create a device, then redirect to `/?created=1`.
 - `GET /device/:id/edit`: load an active device and render the edit form.
@@ -85,12 +79,12 @@ or soft-delete behavior.
 - Create and edit views duplicate their markup and inline script; there is no
   shared form partial at present.
 - Form fields appear in this order: `name`, `type`, `location`, `ipAddress`,
-  `hasAccessLink`, then the conditional `localUrl` or `macAddress` field.
-- `hasAccessLink` uses string values `yes` and `no`.
-- When `hasAccessLink` is `yes`, browser JavaScript displays and requires
-  `localUrl`, while hiding and disabling `macAddress`.
-- When `hasAccessLink` is `no`, browser JavaScript displays and requires
-  `macAddress`, while hiding and disabling `localUrl`.
+  `hasExternalLink`, then the conditional `externalUrl` or `macAddress` field.
+- `hasExternalLink` uses string values `yes` and `no`.
+- When `hasExternalLink` is `yes`, browser JavaScript displays and requires
+  `externalUrl`, while hiding and disabling `macAddress`.
+- When `hasExternalLink` is `no`, browser JavaScript displays and requires
+  `macAddress`, while hiding and disabling `externalUrl`.
 - Disabled conditional inputs are not submitted. Server validation must remain
   authoritative and must not rely only on HTML attributes or browser scripts.
 - Validation errors render the same form with HTTP `422`, an error message, and
@@ -102,17 +96,13 @@ or soft-delete behavior.
 - An optional IP must be a valid IPv4 address.
 - MAC addresses accept colon or hyphen separators, are normalized to uppercase
   colon notation, and must match `AA:BB:CC:DD:EE:FF`.
-- Local URLs have a maximum length of 2048 and must use HTTP or HTTPS.
+- External URLs have a maximum length of 2048 and must use HTTP or HTTPS.
 - Application validation enforces one destination mode: a device stores either
-  a local URL or a MAC address according to `hasAccessLink`.
-- The settings form accepts only an IPv4 address without a protocol. The server
-  validates it with `isIPv4`.
+  an external URL or a MAC address according to `hasExternalLink`.
 
 ## Database Schema
 
-The application uses the `devices` and `app_settings` tables.
-
-The `devices` table:
+The application currently uses one table, `devices`:
 
 | Column | SQLite type | Null | Default and constraints | Application meaning |
 | --- | --- | --- | --- | --- |
@@ -120,28 +110,25 @@ The `devices` table:
 | `name` | `VARCHAR(20)` | No | None | Required display name |
 | `type` | `VARCHAR(20)` | Yes | None | Required by controller validation |
 | `location` | `VARCHAR(50)` | No | `Nao informado` | Required device location |
-| `local_url` | `VARCHAR(2048)` | Yes | None | HTTP/HTTPS destination inside the local network |
+| `external_url` | `VARCHAR(2048)` | Yes | None | HTTP/HTTPS destination for external items |
 | `mac_address` | `VARCHAR(20)` | Yes | Unique when non-null | Wake-on-LAN destination |
 | `ip_address` | `VARCHAR(15)` | Yes | None | Optional IPv4 used for reachability checks |
 | `status` | `INTEGER` | No | `1` | Only rows with value `1` are listed and editable |
 
 Important schema behavior:
 
-- The database does not have a check constraint enforcing the local URL/MAC
+- The database does not have a check constraint enforcing the external URL/MAC
   choice; this invariant is enforced in `validateDeviceForm`.
 - Multiple `NULL` MAC values are allowed by SQLite's unique index behavior.
 - The Sequelize model disables `createdAt` and `updatedAt`; the table has no
   timestamp columns.
 - Deletion is permanent even though a `status` column exists.
-- The Umzug migrations create the complete schema in an empty SQLite file.
-  Every later schema change must have another migration.
+- The initial Umzug migration creates the complete schema in an empty SQLite
+  file. Every later schema change must have another migration.
 - SQLite has limited `ALTER TABLE` support. Test migrations that change or
   remove columns because Sequelize may rebuild the table internally.
 - The SQLite file must remain on persistent storage. The Docker `app` and
   `migrate` services must always mount the same volume and storage path.
-
-The `app_settings` table has a singleton row with `id = 1` and a required
-`external_ip_address` column. No row exists until the settings form is saved.
 
 ## Wake-on-LAN And Ping
 
@@ -164,11 +151,8 @@ The `app_settings` table has a singleton row with `id = 1` and a required
 ## View Behavior
 
 - `index.ejs` displays only database-backed device values escaped by EJS.
-- Access devices omit MAC details and receive a local link plus an external link
-  when the global external IPv4 is configured. Both links use `target="_blank"`
-  and `rel="noopener noreferrer"`.
-- External links replace only the hostname of each local URL, preserving its
-  HTTP/HTTPS protocol, port, path, query string, and fragment.
+- External devices omit MAC details and receive an `Acessar` link with
+  `target="_blank"` and `rel="noopener noreferrer"`.
 - MAC devices receive a `Ligar` button and optional online confirmation through
   ping polling.
 - Permanent deletion uses browser `fetch` after a confirmation dialog.
