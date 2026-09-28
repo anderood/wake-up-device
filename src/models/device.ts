@@ -19,11 +19,6 @@ const devices = database.define(
             type: Sequelize.STRING(20),
             allowNull: true
         },
-        location: {
-            type: Sequelize.STRING(50),
-            allowNull: false,
-            defaultValue: "Nao informado"
-        },
         mac_address:{
             type: Sequelize.STRING(20),
             allowNull: true,

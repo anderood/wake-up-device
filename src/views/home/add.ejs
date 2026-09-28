@@ -72,6 +72,26 @@
       font-weight: 700;
     }
 
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checkbox-label input {
+      width: auto;
+      accent-color: #2563eb;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 18px;
+    }
+
+    .field-group[hidden] {
+      display: none;
+    }
+
     input,
     select {
       width: 100%;
@@ -153,30 +173,39 @@
         <input type="text" name="type" value="<%= values.type %>" maxlength="20" placeholder="Ex.: TV, computador ou console" required>
       </label>
 
-      <label>
-        Local
-        <input type="text" name="location" value="<%= values.location %>" maxlength="50" placeholder="Ex.: Quarto, sala ou cozinha" required>
+      <label class="checkbox-label">
+        <input id="enableWake" type="checkbox" name="enableWake" value="1" <%= values.enableWake ? "checked" : "" %>>
+        Ligar dispositivo
       </label>
 
-      <label>
-        Endereco IPv4 local (opcional)
-        <input id="localIpAddress" type="text" name="localIpAddress" value="<%= values.localIpAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="192.168.1.6">
+      <div id="wakeFields" class="field-group">
+        <label>
+          Endereco MAC (opcional)
+          <input id="macAddress" type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF">
+        </label>
+      </div>
+
+      <label class="checkbox-label">
+        <input id="enableAccess" type="checkbox" name="enableAccess" value="1" <%= values.enableAccess ? "checked" : "" %>>
+        Porta de acesso
       </label>
 
-      <label>
-        Endereco IPv4 externo (opcional)
-        <input id="externalIpAddress" type="text" name="externalIpAddress" value="<%= values.externalIpAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="100.100.10.10">
-      </label>
+      <div id="accessFields" class="field-group">
+        <label>
+          Endereco IPv4 local (opcional)
+          <input id="localIpAddress" type="text" name="localIpAddress" value="<%= values.localIpAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="192.168.1.6">
+        </label>
 
-      <label>
-        Porta de acesso (obrigatoria com IPv4)
-        <input id="accessPort" type="number" name="accessPort" value="<%= values.accessPort %>" min="1" max="65535" inputmode="numeric" placeholder="8080">
-      </label>
+        <label>
+          Endereco IPv4 externo (opcional)
+          <input id="externalIpAddress" type="text" name="externalIpAddress" value="<%= values.externalIpAddress %>" maxlength="15" inputmode="decimal" pattern="((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])" placeholder="100.100.10.10">
+        </label>
 
-      <label>
-        Endereco MAC (opcional)
-        <input type="text" name="macAddress" value="<%= values.macAddress %>" maxlength="17" pattern="([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" placeholder="AA:BB:CC:DD:EE:FF">
-      </label>
+        <label>
+          Porta de acesso (obrigatoria com IPv4)
+          <input id="accessPort" type="number" name="accessPort" value="<%= values.accessPort %>" min="1" max="65535" inputmode="numeric" placeholder="8080">
+        </label>
+      </div>
 
       <div class="actions">
         <a href="/">Cancelar</a>
@@ -185,17 +214,40 @@
     </form>
   </main>
   <script>
+    const enableWake = document.querySelector("#enableWake");
+    const enableAccess = document.querySelector("#enableAccess");
+    const wakeFields = document.querySelector("#wakeFields");
+    const accessFields = document.querySelector("#accessFields");
     const localIpAddress = document.querySelector("#localIpAddress");
     const externalIpAddress = document.querySelector("#externalIpAddress");
     const accessPort = document.querySelector("#accessPort");
 
-    function updateAccessPortRequirement() {
-      accessPort.required = Boolean(localIpAddress.value.trim() || externalIpAddress.value.trim());
+    function setGroupEnabled(group, enabled) {
+      group.hidden = !enabled;
+      group.querySelectorAll("input").forEach((input) => {
+        input.disabled = !enabled;
+      });
     }
 
+    function updateAccessPortRequirement() {
+      accessPort.required = enableAccess.checked && Boolean(localIpAddress.value.trim() || externalIpAddress.value.trim());
+    }
+
+    function updateWakeFields() {
+      setGroupEnabled(wakeFields, enableWake.checked);
+    }
+
+    function updateAccessFields() {
+      setGroupEnabled(accessFields, enableAccess.checked);
+      updateAccessPortRequirement();
+    }
+
+    enableWake.addEventListener("change", updateWakeFields);
+    enableAccess.addEventListener("change", updateAccessFields);
     localIpAddress.addEventListener("input", updateAccessPortRequirement);
     externalIpAddress.addEventListener("input", updateAccessPortRequirement);
-    updateAccessPortRequirement();
+    updateWakeFields();
+    updateAccessFields();
   </script>
 </body>
 </html>

@@ -8,7 +8,8 @@ import { wakeDevice } from "../services/wake-on-lan.ts";
 type DeviceFormValues = {
     name: string;
     type: string;
-    location: string;
+    enableWake: boolean;
+    enableAccess: boolean;
     macAddress: string;
     localIpAddress: string;
     externalIpAddress: string;
@@ -18,7 +19,6 @@ type DeviceFormValues = {
 type DeviceValues = {
     name: string;
     type: string;
-    location: string;
     mac_address: string | null;
     ip_address: string | null;
     external_ip_address: string | null;
@@ -28,7 +28,8 @@ type DeviceValues = {
 const emptyDeviceForm: DeviceFormValues = {
     name: "",
     type: "",
-    location: "",
+    enableWake: false,
+    enableAccess: false,
     macAddress: "",
     localIpAddress: "",
     externalIpAddress: "",
@@ -52,24 +53,28 @@ function getDeviceFormValues(req: Request): DeviceFormValues {
         const fieldValue = body[field];
         return typeof fieldValue === "string" ? fieldValue.trim() : "";
     };
+    const checked = (field: string) => value(field).length > 0;
+    const enableWake = checked("enableWake");
+    const enableAccess = checked("enableAccess");
 
     return {
         name: value("name"),
         type: value("type"),
-        location: value("location"),
-        macAddress: value("macAddress"),
-        localIpAddress: value("localIpAddress") || value("ipAddress"),
-        externalIpAddress: value("externalIpAddress"),
-        accessPort: value("accessPort")
+        enableWake,
+        enableAccess,
+        macAddress: enableWake ? value("macAddress") : "",
+        localIpAddress: enableAccess ? value("localIpAddress") || value("ipAddress") : "",
+        externalIpAddress: enableAccess ? value("externalIpAddress") : "",
+        accessPort: enableAccess ? value("accessPort") : ""
     };
 }
 
 function validateDeviceForm(values: DeviceFormValues): { error: string } | { data: DeviceValues } {
-    if ([values.name, values.type, values.location].some((field) => field.length === 0)) {
+    if ([values.name, values.type].some((field) => field.length === 0)) {
         return { error: "Preencha todos os campos obrigatorios." };
     }
 
-    if (values.name.length > 20 || values.type.length > 20 || values.location.length > 50) {
+    if (values.name.length > 20 || values.type.length > 20) {
         return { error: "Um ou mais campos excedem o tamanho permitido." };
     }
 
@@ -117,7 +122,6 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
         data: {
             name: values.name,
             type: values.type,
-            location: values.location,
             mac_address: macAddress,
             ip_address: values.localIpAddress || null,
             external_ip_address: values.externalIpAddress || null,
@@ -148,8 +152,7 @@ export default class HomeController {
         if (searchTerm.length > 0) {
             where[Op.or] = [
                 { name: { [Op.like]: `%${searchTerm}%` } },
-                { type: { [Op.like]: `%${searchTerm}%` } },
-                { location: { [Op.like]: `%${searchTerm}%` } }
+                { type: { [Op.like]: `%${searchTerm}%` } }
             ];
         }
 
@@ -230,7 +233,8 @@ export default class HomeController {
             const values: DeviceFormValues = {
                 name: String(storedValues.name ?? ""),
                 type: String(storedValues.type ?? ""),
-                location: String(storedValues.location ?? ""),
+                enableWake: typeof storedValues.mac_address === "string" && storedValues.mac_address.length > 0,
+                enableAccess: Boolean(storedValues.ip_address || storedValues.external_ip_address || storedValues.access_port),
                 macAddress: String(storedValues.mac_address ?? ""),
                 localIpAddress: String(storedValues.ip_address ?? ""),
                 externalIpAddress: String(storedValues.external_ip_address ?? ""),
