@@ -464,7 +464,7 @@
               <% if (device.external_ip_address) { %>
                 <div><span>IPv4 externo:</span> <%= device.external_ip_address %></div>
               <% } %>
-              <% if (device.access_port && (device.ip_address || device.external_ip_address)) { %>
+              <% if (device.access_port) { %>
                 <div><span>Porta:</span> <%= device.access_port %></div>
               <% } %>
             </div>

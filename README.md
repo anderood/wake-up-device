@@ -38,14 +38,15 @@ migracoes pendentes e somente depois inicia a aplicacao.
 
 ## Como usar
 
-Ao cadastrar ou editar um dispositivo, nome, tipo e local sao obrigatorios. Os
-destinos abaixo sao opcionais e podem ser usados ao mesmo tempo:
+Ao cadastrar ou editar um dispositivo, nome e tipo sao obrigatorios. Os destinos
+abaixo sao opcionais e podem ser usados ao mesmo tempo:
 
-- **Endereco IPv4 local**: adiciona a acao **Local** e e usado na confirmacao
-  por ping depois do Wake-on-LAN.
-- **Endereco IPv4 externo**: adiciona a acao **Externo**.
-- **Porta de acesso**: e compartilhada pelos enderecos local e externo e passa
-  a ser obrigatoria quando pelo menos um deles e informado.
+- **Endereco IPv4 local**: adiciona a acao **Local** quando tambem existe porta
+  de acesso e e usado na confirmacao por ping depois do Wake-on-LAN.
+- **Endereco IPv4 externo**: adiciona a acao **Externo** quando tambem existe
+  porta de acesso.
+- **Porta de acesso**: e compartilhada pelos enderecos local e externo e so e
+  obrigatoria quando a opcao **Porta de acesso** esta habilitada.
 - **Endereco MAC**: adiciona a acao **Ligar** para enviar Wake-on-LAN.
 
 Por exemplo, os enderecos `192.168.1.6`, `100.100.10.10` e a porta `8080`

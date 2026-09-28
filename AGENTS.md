@@ -83,19 +83,17 @@ or soft-delete behavior.
 - Create and edit views duplicate their markup and inline script; there is no
   shared form partial at present.
 - Form fields appear in this order: `name`, `type`, the `enableWake` checkbox,
-  `macAddress` when wake is enabled, the `enableAccess` checkbox, and then
-  `localIpAddress`, `externalIpAddress`, and `accessPort` when access is
+  `macAddress` when wake is enabled, the `enableAccess` checkbox,
+  `localIpAddress`, `externalIpAddress`, and then `accessPort` when access is
   enabled.
 - The `Ligar dispositivo` checkbox controls whether the MAC field is enabled and
   submitted. When it is unchecked, the server ignores and clears `macAddress`.
-- The `Porta de acesso` checkbox controls whether local IP, external IP, and
-  access port fields are enabled and submitted. When it is unchecked, the server
-  ignores and clears `localIpAddress`, `externalIpAddress`, and `accessPort`.
-- Local IP, external IP, and MAC are independent and optional within their
-  enabled sections.
-- Browser JavaScript requires `accessPort` when access is enabled and either IP
-  field is populated. Server validation remains authoritative and enforces the
-  same relationship.
+- The `Porta de acesso` checkbox controls only whether the access port field is
+  enabled and submitted. When it is unchecked, the server ignores and clears
+  only `accessPort`.
+- Local IP, external IP, and MAC are independent and optional.
+- Browser JavaScript requires `accessPort` when access is enabled. Server
+  validation remains authoritative and enforces the same relationship.
 - Validation errors render the same form with HTTP `422`, an error message, and
   the submitted values preserved.
 - The controller trims all form strings and maps camelCase form names to
@@ -103,7 +101,8 @@ or soft-delete behavior.
 - Names and types are required with a maximum length of 20.
 - Optional local and external addresses must be valid IPv4 addresses.
 - The shared access port must be an integer from 1 to 65535 and is required
-  whenever either access address is configured. A port without an IP is invalid.
+  when the access port checkbox is enabled. IP addresses can be stored without a
+  port, but access links are generated only when an IP and port are both stored.
 - MAC addresses accept colon or hyphen separators, are normalized to uppercase
   colon notation, and must match `AA:BB:CC:DD:EE:FF`.
 - A device may store any combination of MAC, local IPv4, and external IPv4.

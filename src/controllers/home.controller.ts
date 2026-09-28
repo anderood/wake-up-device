@@ -63,8 +63,8 @@ function getDeviceFormValues(req: Request): DeviceFormValues {
         enableWake,
         enableAccess,
         macAddress: enableWake ? value("macAddress") : "",
-        localIpAddress: enableAccess ? value("localIpAddress") || value("ipAddress") : "",
-        externalIpAddress: enableAccess ? value("externalIpAddress") : "",
+        localIpAddress: value("localIpAddress") || value("ipAddress"),
+        externalIpAddress: value("externalIpAddress"),
         accessPort: enableAccess ? value("accessPort") : ""
     };
 }
@@ -96,15 +96,10 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
         return { error: "Informe um endereco IPv4 externo valido, como 100.100.10.10." };
     }
 
-    const hasAccessAddress = values.localIpAddress.length > 0 || values.externalIpAddress.length > 0;
     let accessPort: number | null = null;
 
-    if (hasAccessAddress && values.accessPort.length === 0) {
-        return { error: "Informe a porta de acesso dos enderecos local e externo." };
-    }
-
-    if (!hasAccessAddress && values.accessPort.length > 0) {
-        return { error: "Informe um endereco IPv4 local ou externo para usar a porta de acesso." };
+    if (values.enableAccess && values.accessPort.length === 0) {
+        return { error: "Informe a porta de acesso." };
     }
 
     if (values.accessPort.length > 0) {
@@ -234,7 +229,7 @@ export default class HomeController {
                 name: String(storedValues.name ?? ""),
                 type: String(storedValues.type ?? ""),
                 enableWake: typeof storedValues.mac_address === "string" && storedValues.mac_address.length > 0,
-                enableAccess: Boolean(storedValues.ip_address || storedValues.external_ip_address || storedValues.access_port),
+                enableAccess: Boolean(storedValues.access_port),
                 macAddress: String(storedValues.mac_address ?? ""),
                 localIpAddress: String(storedValues.ip_address ?? ""),
                 externalIpAddress: String(storedValues.external_ip_address ?? ""),
