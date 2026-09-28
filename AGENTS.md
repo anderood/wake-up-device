@@ -1,7 +1,10 @@
 # AGENTS.md
 
 Technical repository context and implementation constraints for AI coding
-agents working on Wake Up Device.
+agents working on Wake Up Device. Treat this file as the authoritative,
+current technical contract for implementation decisions, validation steps, and
+project-specific constraints. Keep it synchronized with the codebase when forms,
+routes, schema, runtime behavior, or verification commands change.
 
 ## Application Stack
 
@@ -79,17 +82,25 @@ or soft-delete behavior.
   `application/x-www-form-urlencoded` requests.
 - Create and edit views duplicate their markup and inline script; there is no
   shared form partial at present.
-- Form fields appear in this order: `name`, `type`, `location`,
-  `localIpAddress`, `externalIpAddress`, `accessPort`, and `macAddress`.
-- Local IP, external IP, and MAC are independent and optional.
-- Browser JavaScript requires `accessPort` when either IP field is populated.
-  Server validation remains authoritative and enforces the same relationship.
+- Form fields appear in this order: `name`, `type`, the `enableWake` checkbox,
+  `macAddress` when wake is enabled, the `enableAccess` checkbox, and then
+  `localIpAddress`, `externalIpAddress`, and `accessPort` when access is
+  enabled.
+- The `Ligar dispositivo` checkbox controls whether the MAC field is enabled and
+  submitted. When it is unchecked, the server ignores and clears `macAddress`.
+- The `Porta de acesso` checkbox controls whether local IP, external IP, and
+  access port fields are enabled and submitted. When it is unchecked, the server
+  ignores and clears `localIpAddress`, `externalIpAddress`, and `accessPort`.
+- Local IP, external IP, and MAC are independent and optional within their
+  enabled sections.
+- Browser JavaScript requires `accessPort` when access is enabled and either IP
+  field is populated. Server validation remains authoritative and enforces the
+  same relationship.
 - Validation errors render the same form with HTTP `422`, an error message, and
   the submitted values preserved.
 - The controller trims all form strings and maps camelCase form names to
   snake_case database columns.
-- Names and types are required with a maximum length of 20. Location is required
-  with a maximum length of 50.
+- Names and types are required with a maximum length of 20.
 - Optional local and external addresses must be valid IPv4 addresses.
 - The shared access port must be an integer from 1 to 65535 and is required
   whenever either access address is configured. A port without an IP is invalid.
@@ -106,7 +117,6 @@ The application currently uses one table, `devices`:
 | `id` | `INTEGER` | No | Primary key, auto increment | Device identifier |
 | `name` | `VARCHAR(20)` | No | None | Required display name |
 | `type` | `VARCHAR(20)` | Yes | None | Required by controller validation |
-| `location` | `VARCHAR(50)` | No | `Nao informado` | Required device location |
 | `mac_address` | `VARCHAR(20)` | Yes | Unique when non-null | Wake-on-LAN destination |
 | `ip_address` | `VARCHAR(15)` | Yes | None | Local IPv4 used for access and reachability checks |
 | `external_ip_address` | `VARCHAR(15)` | Yes | None | External IPv4 used for access |
@@ -123,6 +133,9 @@ Important schema behavior:
 - Deletion is permanent even though a `status` column exists.
 - The initial Umzug migration creates the complete schema in an empty SQLite
   file. Every later schema change must have another migration.
+- Removed columns, such as the former `location` column, must be removed through
+  migrations and removed from the Sequelize model, controller, views, and search
+  behavior together.
 - SQLite has limited `ALTER TABLE` support. Test migrations that change or
   remove columns because Sequelize may rebuild the table internally.
 - The SQLite file must remain on persistent storage. The Docker `app` and
@@ -149,9 +162,12 @@ Important schema behavior:
 ## View Behavior
 
 - `index.ejs` displays only database-backed device values escaped by EJS.
+- Search filters active devices by `name` and `type` only.
 - Cards independently show Font Awesome icon actions for `Ligar` when a MAC is
   available, `Local` for a local IP and port, `Externo` for an external IP and
   port, and `Editar` for every device.
+- Cards display the device type plus optional MAC, local IPv4, external IPv4,
+  and access port values when they exist.
 - Access links use `http://IP:port`, `target="_blank"`, and
   `rel="noopener noreferrer"`.
 - Icon-only actions keep descriptive `aria-label` and `title` attributes. The
