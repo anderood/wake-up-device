@@ -82,13 +82,18 @@ or soft-delete behavior.
   `application/x-www-form-urlencoded` requests.
 - Create and edit views duplicate their markup and inline script; there is no
   shared form partial at present.
-- Form fields appear in this order: `name`, `type`, the `enableWake` checkbox,
-  `macAddress` when wake is enabled, the `enableAccess` checkbox,
+- The form is grouped into three bordered sections separated by a bottom border:
+  `Identificação` (name and type), `Wake-on-LAN` (the wake toggle and MAC), and
+  `Acesso` (the access toggle, local IP, external IP, and port).
+- Form fields appear in this order: `name`, `type`, the `enableWake` toggle,
+  `macAddress` when wake is enabled, the `enableAccess` toggle,
   `localIpAddress`, `externalIpAddress`, and then `accessPort` when access is
   enabled.
-- The `Ligar dispositivo` checkbox controls whether the MAC field is enabled and
-  submitted. When it is unchecked, the server ignores and clears `macAddress`.
-- The `Porta de acesso` checkbox controls only whether the access port field is
+- The `enableWake` and `enableAccess` checkboxes are hidden inputs styled as
+  switch toggles labeled `Ativado` and `Porta configurada`.
+- The `Ativado` toggle controls whether the MAC field is enabled and submitted.
+  When it is unchecked, the server ignores and clears `macAddress`.
+- The `Porta configurada` toggle controls only whether the access port field is
   enabled and submitted. When it is unchecked, the server ignores and clears
   only `accessPort`.
 - Local IP, external IP, and MAC are independent and optional.

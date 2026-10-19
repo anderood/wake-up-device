@@ -46,7 +46,7 @@ abaixo sao opcionais e podem ser usados ao mesmo tempo:
 - **Endereco IPv4 externo**: adiciona a acao **Externo** quando tambem existe
   porta de acesso.
 - **Porta de acesso**: e compartilhada pelos enderecos local e externo e so e
-  obrigatoria quando a opcao **Porta de acesso** esta habilitada.
+  obrigatoria quando a opcao **Porta configurada** esta habilitada.
 - **Endereco MAC**: adiciona a acao **Ligar** para enviar Wake-on-LAN.
 
 Por exemplo, os enderecos `192.168.1.6`, `100.100.10.10` e a porta `8080`

@@ -8,9 +8,34 @@
   <style>
     :root {
       color-scheme: dark;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
+      --color-canvas: #0E1116;
+      --color-surface: #171C24;
+      --color-surface-elevated: #1D2530;
+      --color-border: #28313C;
+      --color-text-primary: #F3F1EA;
+      --color-text-secondary: #9DA8B4;
+      --color-text-tertiary: #6F7B87;
+      --color-accent-primary: #F4B942;
+      --color-accent-success: #6ED7A0;
+      --color-accent-danger: #E47E7E;
+      --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+      --text-label: 11px;
+      --text-caption: 12px;
+      --text-body: 14px;
+      --text-body-large: 16px;
+      --text-title: 24px;
+      --text-display: 48px;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      font-family: var(--font-sans);
+      background: var(--color-canvas);
+      color: var(--color-text-primary);
     }
 
     * {
@@ -18,243 +43,369 @@
     }
 
     [hidden] {
-      display: none;
+      display: none !important;
     }
 
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(135deg, #0f172a 0%, #111827 55%, #1e293b 100%);
+      background: var(--color-canvas);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     main {
-      width: min(960px, calc(100% - 32px));
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      width: min(1120px, calc(100% - 48px));
       margin: 0 auto;
-      padding: 48px 0;
+      padding: 56px 0;
     }
 
-    header {
+    .page-header {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 32px;
+      gap: 32px;
+    }
+
+    .page-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--color-accent-primary);
+      font-size: var(--text-label);
+      font-weight: var(--font-weight-bold);
+      letter-spacing: 0.14em;
+      line-height: 1.2;
+      text-transform: uppercase;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      letter-spacing: -0.04em;
-    }
-
-    p {
       margin: 0;
-      color: #94a3b8;
-      font-size: 1rem;
+      font-size: clamp(2.25rem, 5vw, var(--text-display));
+      font-weight: var(--font-weight-bold);
+      letter-spacing: -0.05em;
+      line-height: 1.05;
     }
 
-    .success-message {
-      margin-bottom: 24px;
-      padding: 12px 16px;
-      border: 1px solid rgba(74, 222, 128, 0.4);
-      border-radius: 12px;
-      background: rgba(20, 83, 45, 0.35);
-      color: #bbf7d0;
+    .primary-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 17px;
+      border: 1px solid var(--color-accent-primary);
+      border-radius: var(--radius-sm);
+      background: var(--color-accent-primary);
+      color: var(--color-canvas);
+      font-size: var(--text-body);
+      font-weight: var(--font-weight-bold);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: filter 160ms ease, transform 160ms ease;
     }
 
-    .empty-message {
-      padding: 24px;
-      border: 1px dashed rgba(148, 163, 184, 0.32);
-      border-radius: 20px;
-      text-align: center;
+    .primary-button:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .primary-button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 50%, transparent);
+      outline-offset: 2px;
     }
 
     .search-form {
       display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .search-field {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+      height: 52px;
+      padding: 0 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-text-secondary);
+      transition: border-color 160ms ease;
+    }
+
+    .search-field:focus-within {
+      border-color: var(--color-text-tertiary);
+    }
+
+    .search-field .fa-magnifying-glass {
+      flex-shrink: 0;
+      font-size: 1rem;
     }
 
     .search-input {
       flex: 1;
       min-width: 0;
-      padding: 12px 16px;
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      border-radius: 12px;
-      background: rgba(15, 23, 42, 0.7);
-      color: #e5e7eb;
+      border: 0;
+      background: transparent;
+      color: var(--color-text-primary);
       font: inherit;
+      font-size: var(--text-body);
     }
 
     .search-input::placeholder {
-      color: #94a3b8;
+      color: var(--color-text-secondary);
     }
 
-    .search-input:focus-visible {
-      outline: 3px solid rgba(37, 99, 235, 0.45);
-      outline-offset: 2px;
+    .search-input:focus {
+      outline: none;
     }
 
-    .search-button {
-      padding: 12px 16px;
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
       border: 0;
-      border-radius: 12px;
-      background: #2563eb;
-      color: #ffffff;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
     }
 
-    .primary-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .device-count {
+      margin: -16px 0 0;
+      color: var(--color-text-tertiary);
+      font-size: var(--text-caption);
+      line-height: 1.4;
+    }
+
+    .flash {
+      margin: 0;
       padding: 12px 16px;
-      border-radius: 12px;
-      color: #ffffff;
-      font-weight: 700;
-      text-decoration: none;
-      background: #2563eb;
+      border: 1px solid color-mix(in srgb, var(--color-accent-success) 40%, transparent);
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--color-accent-success) 12%, transparent);
+      color: var(--color-accent-success);
+      font-size: var(--text-body);
     }
 
     .device-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px;
     }
 
-    .device-card {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      min-height: 210px;
-      padding: 22px;
-      border: 1px solid rgba(148, 163, 184, 0.24);
-      border-radius: 20px;
-      background: rgba(15, 23, 42, 0.72);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    .empty-message {
+      flex: 1 1 100%;
+      margin: 0;
+      padding: 40px 24px;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      color: var(--color-text-tertiary);
+      font-size: var(--text-body);
+      text-align: center;
     }
 
-    .delete-button {
-      position: absolute;
-      top: 16px;
-      right: 16px;
+    .device-card {
+      display: flex;
+      flex: 1 1 320px;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 320px;
+      padding: 20px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .device-type {
+      color: var(--color-text-tertiary);
+      font-size: var(--text-label);
+      font-weight: var(--font-weight-bold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .icon-button {
       display: inline-grid;
       place-items: center;
-      width: 34px;
-      height: 34px;
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
       padding: 0;
-      border: 1px solid rgba(248, 113, 113, 0.35);
-      border-radius: 10px;
-      background: rgba(127, 29, 29, 0.28);
-      color: #fecaca;
-      font: inherit;
-      font-size: 1.4rem;
-      line-height: 1;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--color-text-tertiary);
+      font-size: 0.85rem;
       cursor: pointer;
+      transition: color 160ms ease, border-color 160ms ease;
     }
 
     .delete-button:hover {
-      border-color: rgba(248, 113, 113, 0.7);
-      background: rgba(153, 27, 27, 0.58);
+      color: var(--color-accent-danger);
+      border-color: color-mix(in srgb, var(--color-accent-danger) 50%, transparent);
     }
 
-    .delete-button:focus-visible {
-      outline: 3px solid rgba(248, 113, 113, 0.45);
+    .icon-button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--color-accent-danger) 45%, transparent);
       outline-offset: 2px;
+    }
+
+    .card-identity {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
     .device-card h2 {
       margin: 0;
-      font-size: 1.35rem;
+      color: var(--color-text-primary);
+      font-size: var(--text-title);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: -0.025em;
+      line-height: 1.15;
     }
 
-    .device-type {
-      display: inline-flex;
-      width: fit-content;
-      margin-right: 40px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(59, 130, 246, 0.18);
-      color: #bfdbfe;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .device-info {
-      display: grid;
+    .card-metadata {
+      display: flex;
+      flex-direction: column;
       gap: 8px;
-      color: #cbd5e1;
-      font-size: 0.95rem;
     }
 
-    .device-info span {
-      color: #94a3b8;
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .meta-label {
+      flex-shrink: 0;
+      width: 64px;
+      color: var(--color-text-tertiary);
+      font-size: var(--text-label);
+      font-weight: var(--font-weight-bold);
+      letter-spacing: 0.1em;
+      line-height: 1.2;
+    }
+
+    .meta-value {
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      font-size: var(--text-body);
+      line-height: 1.3;
+      overflow-wrap: anywhere;
     }
 
     .card-actions {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
       margin-top: auto;
     }
 
-    .card-icon-action,
-    .wake-button {
+    .card-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: var(--text-caption);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
+    }
+
+    .card-status .status-dot {
+      flex-shrink: 0;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .card-status[data-tone="success"] {
+      color: var(--color-accent-success);
+    }
+
+    .card-status[data-tone="muted"] {
+      color: var(--color-text-tertiary);
+    }
+
+    .card-action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-button {
       display: inline-grid;
       place-items: center;
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
       padding: 0;
-      border-radius: 12px;
-      background: #2563eb;
-      color: #ffffff;
-      font: inherit;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
-    }
-
-    .card-icon-action {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--color-text-secondary);
+      font-size: 0.9rem;
       text-decoration: none;
+      cursor: pointer;
+      transition: color 160ms ease, border-color 160ms ease, transform 160ms ease;
     }
 
-    .card-icon-action:hover,
-    .wake-button:hover:not(:disabled) {
-      transform: translateY(-2px);
+    .action-button:hover {
+      color: var(--color-text-primary);
+      border-color: var(--color-text-tertiary);
+      transform: translateY(-1px);
     }
 
-    .card-icon-action:focus-visible,
-    .wake-button:focus-visible {
-      outline: 3px solid rgba(147, 197, 253, 0.55);
+    .action-button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--color-text-secondary) 45%, transparent);
       outline-offset: 2px;
     }
 
-    .card-icon-action--edit {
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: rgba(15, 23, 42, 0.7);
-      color: #cbd5e1;
-    }
-
-    .card-icon-action--edit:hover {
-      border-color: rgba(148, 163, 184, 0.6);
-      background: rgba(51, 65, 85, 0.75);
-    }
-
     .wake-button {
-      border: 1px solid #16a34a;
-      background: #16a34a;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--color-accent-primary);
+      border-radius: var(--radius-sm);
+      background: var(--color-accent-primary);
+      color: var(--color-canvas);
+      font: inherit;
+      font-size: var(--text-caption);
+      font-weight: var(--font-weight-bold);
+      cursor: pointer;
+      transition: filter 160ms ease, transform 160ms ease;
     }
 
     .wake-button:hover:not(:disabled) {
-      background: #15803d;
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .wake-button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 50%, transparent);
+      outline-offset: 2px;
     }
 
     .wake-button:disabled {
@@ -262,53 +413,38 @@
       opacity: 0.75;
     }
 
-    .card-icon-action--local {
-      border: 1px solid #2563eb;
-      background: #2563eb;
-    }
-
-    .card-icon-action--local:hover {
-      background: #1d4ed8;
-    }
-
-    .card-icon-action--external {
-      border: 1px solid #7c3aed;
-      background: #7c3aed;
-    }
-
-    .card-icon-action--external:hover {
-      background: #6d28d9;
-    }
-
     .wake-status {
       flex: 1 0 100%;
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--text-caption);
       line-height: 1.45;
     }
 
     .wake-status[data-state="success"] {
-      color: #86efac;
+      color: var(--color-accent-success);
     }
 
     .wake-status[data-state="warning"] {
-      color: #fde68a;
+      color: var(--color-accent-primary);
     }
 
     .wake-status[data-state="error"] {
-      color: #fecaca;
+      color: var(--color-accent-danger);
     }
 
     .delete-dialog {
       width: min(440px, calc(100% - 32px));
       padding: 0;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      border-radius: 20px;
-      background: #111827;
-      color: #e5e7eb;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+      color: var(--color-text-primary);
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
     }
 
     .delete-dialog::backdrop {
-      background: rgba(2, 6, 23, 0.78);
+      background: rgba(6, 8, 12, 0.78);
       backdrop-filter: blur(4px);
     }
 
@@ -319,23 +455,27 @@
     .delete-dialog h2 {
       margin: 0 0 10px;
       font-size: 1.5rem;
+      letter-spacing: -0.02em;
     }
 
     .delete-dialog p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--text-body);
       line-height: 1.6;
     }
 
     .delete-device-name {
-      color: #e5e7eb;
+      color: var(--color-text-primary);
     }
 
     .delete-error {
-      margin-top: 16px;
+      margin-top: 16px !important;
       padding: 10px 12px;
-      border: 1px solid rgba(248, 113, 113, 0.45);
-      border-radius: 10px;
-      background: rgba(127, 29, 29, 0.35);
-      color: #fecaca !important;
+      border: 1px solid color-mix(in srgb, var(--color-accent-danger) 45%, transparent);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--color-accent-danger) 12%, transparent);
+      color: var(--color-accent-danger) !important;
     }
 
     .dialog-actions {
@@ -346,11 +486,15 @@
     }
 
     .dialog-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 11px 16px;
-      border-radius: 10px;
-      color: #ffffff;
+      border-radius: var(--radius-sm);
+      color: var(--color-text-primary);
       font: inherit;
-      font-weight: 700;
+      font-size: var(--text-body);
+      font-weight: var(--font-weight-semibold);
       cursor: pointer;
     }
 
@@ -360,40 +504,42 @@
     }
 
     .dialog-cancel {
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
     }
 
     .dialog-confirm {
-      border: 1px solid #dc2626;
-      background: #dc2626;
+      border: 1px solid var(--color-accent-danger);
+      background: var(--color-accent-danger);
+      color: var(--color-canvas);
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 720px) {
       main {
-        width: min(100% - 24px, 960px);
-        padding: 28px 0;
+        width: min(100% - 32px, 1120px);
+        gap: 24px;
+        padding: 32px 0;
       }
 
-      header {
-        align-items: flex-start;
+      .page-header {
+        align-items: stretch;
         flex-direction: column;
+        gap: 20px;
       }
 
-      .primary-link {
+      .primary-button {
+        justify-content: center;
         width: 100%;
-      }
-
-      .search-form {
-        flex-direction: column;
-      }
-
-      .search-button {
-        width: 100%;
+        height: 48px;
+        padding: 0 16px;
       }
 
       .device-card {
-        min-height: auto;
+        flex-basis: 100%;
+        min-width: 0;
+        gap: 16px;
+        padding: 16px;
       }
 
       .dialog-actions {
@@ -408,32 +554,42 @@
 </head>
 <body>
   <main>
-    <header>
-      <div>
+    <header class="page-header">
+      <div class="page-heading">
+        <p class="eyebrow">Network control</p>
         <h1>Dispositivos</h1>
-        <p>Gerencie os dispositivos cadastrados da sua rede interna.</p>
       </div>
-      <a class="primary-link" href="/add/create">Adicionar dispositivo</a>
+      <a class="primary-button" href="/add/create">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        Adicionar dispositivo
+      </a>
     </header>
 
     <form class="search-form" action="/" method="get" role="search">
-      <input
-        class="search-input"
-        type="search"
-        name="q"
-        value="<%= searchTerm %>"
-        placeholder="Buscar por nome, tipo ou local"
-        aria-label="Buscar por nome, tipo ou local"
-      >
-      <button class="search-button" type="submit">Buscar</button>
+      <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input
+          class="search-input"
+          type="search"
+          name="q"
+          value="<%= searchTerm %>"
+          placeholder="Buscar por nome ou tipo"
+          aria-label="Buscar por nome ou tipo"
+        >
+        <button class="visually-hidden" type="submit">Buscar</button>
+      </div>
     </form>
 
+    <p class="device-count">
+      <%= devices.length %> <%= devices.length === 1 ? "dispositivo cadastrado" : "dispositivos cadastrados" %>
+    </p>
+
     <% if (created) { %>
-      <p class="success-message" role="status">Dispositivo cadastrado com sucesso.</p>
+      <p class="flash" role="status">Dispositivo cadastrado com sucesso.</p>
     <% } %>
 
     <% if (updated) { %>
-      <p class="success-message" role="status">Dispositivo atualizado com sucesso.</p>
+      <p class="flash" role="status">Dispositivo atualizado com sucesso.</p>
     <% } %>
 
     <section class="device-grid" aria-label="Dispositivos cadastrados">
@@ -441,53 +597,93 @@
         <p class="empty-message"><%= searchTerm ? "Nenhum dispositivo encontrado para a busca." : "Nenhum dispositivo cadastrado." %></p>
       <% } %>
 
-      <% devices.forEach(device => { %>
+      <% devices.forEach(device => {
+        const hasMac = Boolean(device.mac_address);
+        const hasLocal = Boolean(device.ip_address);
+        const hasAccess = Boolean(device.local_access_url || device.external_access_url);
+        let statusLabel = "Sem ações de acesso";
+        let statusTone = "muted";
+
+        if (hasMac && hasLocal) {
+          statusLabel = "Pronto para ligar";
+          statusTone = "success";
+        } else if (hasMac) {
+          statusLabel = "Sem acesso local";
+        } else if (hasAccess) {
+          statusLabel = "Acesso configurado";
+          statusTone = "success";
+        }
+      %>
         <article class="device-card">
-          <button
-            class="delete-button"
-            type="button"
-            data-device-id="<%= device.id %>"
-            data-device-name="<%= device.name %>"
-            aria-label="Excluir <%= device.name %>"
-            title="Excluir dispositivo"
-          ><span aria-hidden="true">&times;</span></button>
-          <span class="device-type"><%= device.type || "Sem tipo" %></span>
-          <div>
-            <h2><%= device.name %></h2>
-            <div class="device-info">
-              <% if (device.mac_address) { %>
-                <div><span>MAC:</span> <%= device.mac_address %></div>
-              <% } %>
-              <% if (device.ip_address) { %>
-                <div><span>IPv4 local:</span> <%= device.ip_address %></div>
-              <% } %>
-              <% if (device.external_ip_address) { %>
-                <div><span>IPv4 externo:</span> <%= device.external_ip_address %></div>
-              <% } %>
-              <% if (device.access_port) { %>
-                <div><span>Porta:</span> <%= device.access_port %></div>
-              <% } %>
-            </div>
+          <div class="card-top">
+            <span class="device-type"><%= device.type || "Sem tipo" %></span>
+            <button
+              class="icon-button delete-button"
+              type="button"
+              data-device-id="<%= device.id %>"
+              data-device-name="<%= device.name %>"
+              aria-label="Excluir <%= device.name %>"
+              title="Excluir dispositivo"
+            ><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
           </div>
-          <div class="card-actions">
-            <a class="card-icon-action card-icon-action--edit" href="/device/<%= device.id %>/edit" aria-label="Editar <%= device.name %>" title="Editar <%= device.name %>">
-              <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-            </a>
+
+          <div class="card-identity">
+            <h2><%= device.name %></h2>
+          </div>
+
+          <div class="card-metadata">
             <% if (device.mac_address) { %>
-              <button class="wake-button" type="button" data-device-id="<%= device.id %>" data-device-name="<%= device.name %>" aria-label="Ligar <%= device.name %>" title="Ligar <%= device.name %>">
-                <i class="action-icon fa-solid fa-power-off" aria-hidden="true"></i>
-              </button>
+              <div class="meta-row">
+                <span class="meta-label">MAC</span>
+                <span class="meta-value"><%= device.mac_address %></span>
+              </div>
             <% } %>
-            <% if (device.local_access_url) { %>
-              <a class="card-icon-action card-icon-action--local" href="<%= device.local_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco local" title="Acessar <%= device.name %> pelo endereco local">
-                <i class="fa-solid fa-house" aria-hidden="true"></i>
+            <% if (device.ip_address) { %>
+              <div class="meta-row">
+                <span class="meta-label">LOCAL</span>
+                <span class="meta-value"><%= device.ip_address %></span>
+              </div>
+            <% } %>
+            <% if (device.external_ip_address) { %>
+              <div class="meta-row">
+                <span class="meta-label">EXTERNO</span>
+                <span class="meta-value"><%= device.external_ip_address %></span>
+              </div>
+            <% } %>
+            <% if (device.access_port) { %>
+              <div class="meta-row">
+                <span class="meta-label">PORTA</span>
+                <span class="meta-value"><%= device.access_port %></span>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="card-actions">
+            <span class="card-status" data-tone="<%= statusTone %>">
+              <span class="status-dot" aria-hidden="true"></span>
+              <%= statusLabel %>
+            </span>
+            <div class="card-action-group">
+              <% if (device.mac_address) { %>
+                <button class="wake-button" type="button" data-device-id="<%= device.id %>" data-device-name="<%= device.name %>" aria-label="Ligar <%= device.name %>" title="Ligar <%= device.name %>">
+                  <i class="action-icon fa-solid fa-power-off" aria-hidden="true"></i>
+                  Ligar
+                </button>
+              <% } %>
+              <% if (device.local_access_url) { %>
+                <a class="action-button" href="<%= device.local_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco local" title="Acessar <%= device.name %> pelo endereco local">
+                  <i class="fa-solid fa-house" aria-hidden="true"></i>
+                </a>
+              <% } %>
+              <% if (device.external_access_url) { %>
+                <a class="action-button" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco externo" title="Acessar <%= device.name %> pelo endereco externo">
+                  <i class="fa-solid fa-globe" aria-hidden="true"></i>
+                </a>
+              <% } %>
+              <a class="action-button" href="/device/<%= device.id %>/edit" aria-label="Editar <%= device.name %>" title="Editar <%= device.name %>">
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
               </a>
-            <% } %>
-            <% if (device.external_access_url) { %>
-              <a class="card-icon-action card-icon-action--external" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco externo" title="Acessar <%= device.name %> pelo endereco externo">
-                <i class="fa-solid fa-globe" aria-hidden="true"></i>
-              </a>
-            <% } %>
+            </div>
             <% if (device.mac_address) { %>
               <p class="wake-status" role="status" aria-live="polite" hidden></p>
             <% } %>
@@ -569,7 +765,7 @@
       button.addEventListener("click", async () => {
         const deviceId = button.dataset.deviceId;
         const deviceName = button.dataset.deviceName || "o dispositivo";
-        const status = button.parentElement.querySelector(".wake-status");
+        const status = button.parentElement.parentElement.querySelector(".wake-status");
         const icon = button.querySelector(".action-icon");
 
         if (!deviceId || !status || !icon) {
