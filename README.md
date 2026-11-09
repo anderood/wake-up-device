@@ -13,6 +13,9 @@ associados ao item.
 - Acoes dos cards representadas por icones do Font Awesome carregados localmente.
 - Interface web responsiva renderizada no servidor.
 - Persistencia dos dados em um arquivo SQLite.
+- Agendamento semanal e auditoria de operacoes EC2.
+- Worker Python independente com simulacao, reconciliacao e protecao contra
+  repeticao de mutacoes AWS.
 
 ## Iniciar com Docker
 
@@ -62,9 +65,41 @@ Copie os valores necessarios de `.env.example` para um arquivo `.env`:
 | `APP_PORT` | Porta publicada pelo Docker Compose | `3000` |
 | `DB_STORAGE` | Caminho do arquivo SQLite no desenvolvimento local | `wake-up-device.sqlite` |
 | `WOL_BROADCAST_ADDRESS` | Endereco de broadcast usado pelo Wake-on-LAN | `255.255.255.255` |
+| `SESSION_SECRET` | Segredo das sessoes web server-side | obrigatorio em producao |
+| `OIDC_ISSUER` | Issuer do provedor OIDC | obrigatorio para `/ec2` |
+| `OIDC_CLIENT_ID` | Client ID OIDC | obrigatorio para `/ec2` |
+| `OIDC_CLIENT_SECRET` | Client secret OIDC, quando o cliente for confidencial | opcional |
+| `OIDC_REDIRECT_URI` | Callback registrado no provedor | `http://localhost:3000/auth/callback` |
+| `AWS_REGION_FILE` | Allowlist offline de regioes EC2 | `config/aws-ec2-regions.json` |
+| `WORKER_TIMEZONE` | Fuso do worker | `America/Sao_Paulo` |
+| `WORKER_MAX_RUNS_PER_TICK` | Limite de runs por ciclo | `10` |
+| `WORKER_READ_RETRIES` | Tentativas adicionais de leitura AWS | `2` |
 
-`APP_PORT` altera somente a porta publicada pelo Docker Compose. O servidor
-dentro do container continua ouvindo na porta `3000`.
+`APP_PORT` define a porta usada pelo servidor. O Compose usa rede host para
+permitir que os broadcasts Wake-on-LAN saiam pela interface do host.
+
+## Automacao EC2
+
+O console protegido esta em `/ec2`. Configure o provedor OIDC com o callback
+exato de `OIDC_REDIRECT_URI`, aplique as migracoes e configure o mesmo caminho
+absoluto de `DB_STORAGE` para o processo web e o worker. A allowlist regional e
+offline e deve ser revisada somente por alteracoes versionadas em
+`config/aws-ec2-regions.json`.
+
+O worker nao recebe credenciais ou alvos pela linha de comando. Use a cadeia de
+credenciais padrao da AWS, `credential_process` ou uma role da maquina. Para
+instalar o worker localmente:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e './worker[test]'
+DB_STORAGE=/var/lib/wake-up-device/wake-up-device.sqlite \
+  .venv/bin/python -m ec2_worker.cli --tick
+```
+
+Os units em `deploy/` executam o servidor e um tick do worker a cada minuto
+sob um usuario dedicado. Ajuste `WorkingDirectory`, caminhos e
+`/etc/wake-up-device.env` antes de instalar os units.
 
 ## Wake-on-LAN
 
@@ -110,8 +145,15 @@ Para verificar os tipos:
 npx tsc --noEmit
 ```
 
-O projeto ainda nao possui testes automatizados. O comando `npm test` e apenas
-um placeholder e termina com erro.
+Testes web e verificacoes de sintaxe:
+
+```bash
+npm run test:web
+python3 -m compileall -q worker/src worker/tests
+pytest worker/tests -q
+```
+
+O comando `npm test` permanece um placeholder e termina com erro.
 
 ## Migracoes
 
@@ -136,5 +178,8 @@ docker compose down --volumes
 
 ## Seguranca
 
-A aplicacao nao possui autenticacao, autorizacao ou protecao contra CSRF.
-Mantenha-a restrita a uma rede confiavel.
+As rotas EC2 exigem OIDC Authorization Code com PKCE, sessoes server-side em
+SQLite e tokens CSRF nos POSTs. Credenciais AWS ficam somente no worker e nunca
+sao aceitas por HTTP nem gravadas na auditoria. Ainda nao existem papeis de
+autorizacao nem rate limiting; mantenha a aplicacao restrita a uma rede
+confiavel.

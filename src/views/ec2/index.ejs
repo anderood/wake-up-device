@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Automação EC2</title>
+    <style>
+        :root { color-scheme: light; font-family: system-ui, sans-serif; background: #f4f6f8; color: #17202a; }
+        body { margin: 0; padding: 1rem; }
+        main { max-width: 1100px; margin: auto; }
+        header, section { background: white; border: 1px solid #d9dee5; border-radius: .75rem; padding: 1rem; margin-bottom: 1rem; }
+        header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        h1, h2 { margin-top: 0; }
+        form { display: grid; gap: .75rem; }
+        label { display: grid; gap: .3rem; font-weight: 600; }
+        input, select, button { font: inherit; padding: .55rem .65rem; border: 1px solid #b8c1cc; border-radius: .4rem; }
+        button { cursor: pointer; background: #135d9e; color: white; border-color: #135d9e; }
+        button.secondary { background: white; color: #135d9e; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+        .error { color: #a51d2d; background: #fff0f1; padding: .75rem; border-radius: .4rem; }
+        table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+        th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e3e7eb; vertical-align: top; }
+        code { overflow-wrap: anywhere; }
+        @media (max-width: 650px) { body { padding: .5rem; } th, td { padding: .4rem .2rem; } table { font-size: .75rem; } }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <div>
+            <h1>Automação EC2</h1>
+            <p>Timezone operacional: <code>America/Sao_Paulo</code></p>
+        </div>
+        <form method="post" action="/auth/logout">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="secondary" type="submit">Sair</button>
+        </form>
+    </header>
+
+    <% if (error) { %><p class="error"><%= error %></p><% } %>
+
+    <section>
+        <h2>Configuração</h2>
+        <form method="post" action="/ec2/config">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <% if (config) { %><input type="hidden" name="revision" value="<%= config.revision %>"><% } %>
+            <div class="grid">
+                <label>Instance ID
+                    <input name="instanceId" required pattern="i-[0-9a-f]{8,17}" value="<%= config?.instance_id ?? '' %>">
+                </label>
+                <label>Região AWS
+                    <select name="region" required>
+                        <option value="">Selecione</option>
+                        <% regions.forEach((region) => { %><option value="<%= region %>" <%= config?.region === region ? 'selected' : '' %>><%= region %></option><% }) %>
+                    </select>
+                </label>
+                <label><span>Recovery</span>
+                    <span><input type="checkbox" name="recoveryEnabled" <%= config?.recovery_enabled ? 'checked' : '' %>> habilitado</span>
+                </label>
+            </div>
+            <button type="submit">Salvar configuração</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Ação manual</h2>
+        <form method="post" action="/ec2/actions" id="action-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="requestId" id="request-id">
+            <div class="grid">
+                <label>Ação
+                    <select name="action"><option value="start">start</option><option value="stop">stop</option><option value="inspect">inspect</option></select>
+                </label>
+                <label>Modo
+                    <select name="mode"><option value="simulation">simulation</option><option value="real">real</option></select>
+                </label>
+            </div>
+            <button type="submit">Enfileirar ação</button>
+        </form>
+        <div class="actions" style="margin-top: .75rem">
+            <button type="button" class="secondary" id="refresh-status">Consultar estado na AWS</button>
+            <span id="status-message" aria-live="polite">Estado persistido ainda não consultado.</span>
+        </div>
+    </section>
+
+    <section>
+        <h2>Schedules</h2>
+        <form method="post" action="/ec2/schedules">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="grid">
+                <label>Ação<select name="action"><option value="start">start</option><option value="stop">stop</option></select></label>
+                <label>Dia da semana<select name="weekday"><% for (let day = 1; day <= 7; day++) { %><option value="<%= day %>"><%= day %></option><% } %></select></label>
+                <label>Horário local<input type="time" name="localTime" required></label>
+            </div>
+            <button type="submit">Adicionar schedule</button>
+        </form>
+        <% if (schedules.length) { %>
+        <table><thead><tr><th>Ação</th><th>Dia</th><th>Horário</th><th></th></tr></thead><tbody>
+        <% schedules.forEach((schedule) => { %><tr><td><%= schedule.action %></td><td><%= schedule.weekday %></td><td><%= schedule.local_time %></td><td><form method="post" action="/ec2/schedules/<%= schedule.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit">Remover</button></form></td></tr><% }) %>
+        </tbody></table>
+        <% } else { %><p>Nenhum schedule configurado.</p><% } %>
+    </section>
+
+    <section>
+        <h2>Histórico recente</h2>
+        <% if (runs.length) { %>
+        <table><thead><tr><th>ID</th><th>Ação</th><th>Modo</th><th>Status</th><th>Solicitado</th><th>Resultado</th></tr></thead><tbody>
+        <% runs.forEach((run) => { %><tr><td><%= run.id %></td><td><%= run.action %></td><td><%= run.mode %></td><td><%= run.status %></td><td><%= run.requested_at %></td><td><%= run.result ?? run.error_message ?? '' %></td></tr><% }) %>
+        </tbody></table>
+        <% } else { %><p>Nenhuma execução registrada.</p><% } %>
+    </section>
+</main>
+<script>
+const csrfToken = <%- JSON.stringify(csrfToken) %>;
+const statusMessage = document.getElementById("status-message");
+const showStatus = async () => {
+    const response = await fetch("/ec2/status");
+    if (!response.ok) return;
+    const status = await response.json();
+    const observation = status.latestObservation?.observed_state;
+    const runStatus = status.latestRun?.status;
+    if (statusMessage) statusMessage.textContent = observation ? `Último estado observado: ${observation} (${runStatus ?? ""})` : `Última execução: ${runStatus ?? "nenhuma"}`;
+};
+document.getElementById("refresh-status")?.addEventListener("click", async () => {
+    const requestId = crypto.randomUUID();
+    const body = new URLSearchParams({ _csrf: csrfToken, action: "inspect", mode: "real", requestId });
+    const response = await fetch("/ec2/status/refresh", { method: "POST", headers: { "x-csrf-token": csrfToken }, body });
+    if (statusMessage) statusMessage.textContent = response.ok ? "Inspeção enfileirada; aguardando o worker." : "Não foi possível enfileirar a inspeção.";
+    await showStatus();
+});
+document.getElementById("action-form")?.addEventListener("submit", () => {
+    const field = document.getElementById("request-id");
+    if (field && !field.value) field.value = crypto.randomUUID();
+});
+void showStatus();
+window.setInterval(() => void showStatus(), 5000);
+</script>
+</body>
+</html>
