@@ -2,8 +2,10 @@ import type { Request, Response } from "express";
 import { isIPv4 } from "node:net";
 import { Op, UniqueConstraintError } from "sequelize";
 import devices from "../models/device.ts";
+import deviceSchedules from "../models/device-schedule.ts";
 import { pingIpv4 } from "../services/ping.ts";
 import { wakeDevice } from "../services/wake-on-lan.ts";
+import { deleteEc2Schedule } from "../services/eventbridge-scheduler.ts";
 
 type DeviceFormValues = {
     name: string;
@@ -14,6 +16,8 @@ type DeviceFormValues = {
     localIpAddress: string;
     externalIpAddress: string;
     accessPort: string;
+    ec2InstanceId: string;
+    awsRegion: string;
 };
 
 type DeviceValues = {
@@ -23,6 +27,8 @@ type DeviceValues = {
     ip_address: string | null;
     external_ip_address: string | null;
     access_port: number | null;
+    ec2_instance_id: string | null;
+    aws_region: string | null;
 };
 
 const emptyDeviceForm: DeviceFormValues = {
@@ -33,7 +39,9 @@ const emptyDeviceForm: DeviceFormValues = {
     macAddress: "",
     localIpAddress: "",
     externalIpAddress: "",
-    accessPort: ""
+    accessPort: "",
+    ec2InstanceId: "",
+    awsRegion: ""
 };
 
 function parseDeviceId(value: unknown): number | null {
@@ -65,7 +73,9 @@ function getDeviceFormValues(req: Request): DeviceFormValues {
         macAddress: enableWake ? value("macAddress") : "",
         localIpAddress: value("localIpAddress") || value("ipAddress"),
         externalIpAddress: value("externalIpAddress"),
-        accessPort: enableAccess ? value("accessPort") : ""
+        accessPort: enableAccess ? value("accessPort") : "",
+        ec2InstanceId: value("ec2InstanceId"),
+        awsRegion: value("awsRegion")
     };
 }
 
@@ -113,6 +123,26 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
         }
     }
 
+    let ec2InstanceId: string | null = null;
+    let awsRegion: string | null = null;
+
+    if (values.ec2InstanceId.length > 0 || values.awsRegion.length > 0) {
+        if (values.ec2InstanceId.length === 0 || values.awsRegion.length === 0) {
+            return { error: "Informe a instancia EC2 e a regiao AWS juntas." };
+        }
+
+        if (!/^i-[0-9a-f]{8,17}$/.test(values.ec2InstanceId)) {
+            return { error: "Informe um ID de instancia EC2 valido." };
+        }
+
+        if (!/^[a-z]{2}(?:-[a-z]+)?-[a-z0-9-]+-\d$/.test(values.awsRegion)) {
+            return { error: "Informe uma regiao AWS valida, como us-east-1." };
+        }
+
+        ec2InstanceId = values.ec2InstanceId;
+        awsRegion = values.awsRegion;
+    }
+
     return {
         data: {
             name: values.name,
@@ -120,7 +150,9 @@ function validateDeviceForm(values: DeviceFormValues): { error: string } | { dat
             mac_address: macAddress,
             ip_address: values.localIpAddress || null,
             external_ip_address: values.externalIpAddress || null,
-            access_port: accessPort
+            access_port: accessPort,
+            ec2_instance_id: ec2InstanceId,
+            aws_region: awsRegion
         }
     };
 }
@@ -138,36 +170,50 @@ function buildIpv4AccessUrl(ipAddress: unknown, accessPort: unknown): string | n
     return `http://${ipAddress}:${accessPort}`;
 }
 
+async function renderDeviceIndex(req: Request, res: Response, ec2Only: boolean) {
+    const searchTerm = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const where: Record<string | symbol, unknown> = { status: 1 };
+
+    if (ec2Only) {
+        where.ec2_instance_id = { [Op.not]: null };
+    }
+
+    if (searchTerm.length > 0) {
+        where[Op.or] = [
+            { name: { [Op.like]: `%${searchTerm}%` } },
+            { type: { [Op.like]: `%${searchTerm}%` } }
+        ];
+    }
+
+    const allDevices = await devices.findAll({ where });
+    const renderedDevices = allDevices.map((device) => {
+        const values = device.toJSON() as Record<string, unknown>;
+
+        return {
+            ...values,
+            local_access_url: buildIpv4AccessUrl(values.ip_address, values.access_port),
+            external_access_url: buildIpv4AccessUrl(values.external_ip_address, values.access_port)
+        };
+    });
+
+    return res.render("home/index", {
+        devices: renderedDevices,
+        searchTerm,
+        searchAction: ec2Only ? "/ec2" : "/",
+        isEc2Page: ec2Only,
+        created: req.query.created === "1",
+        updated: req.query.updated === "1"
+    });
+}
+
 export default class HomeController {
 
     async index(req: Request, res: Response) {
-        const searchTerm = typeof req.query.q === "string" ? req.query.q.trim() : "";
-        const where: Record<string | symbol, unknown> = { status: 1 };
+        return renderDeviceIndex(req, res, false);
+    }
 
-        if (searchTerm.length > 0) {
-            where[Op.or] = [
-                { name: { [Op.like]: `%${searchTerm}%` } },
-                { type: { [Op.like]: `%${searchTerm}%` } }
-            ];
-        }
-
-        const allDevices = await devices.findAll({ where });
-        const renderedDevices = allDevices.map((device) => {
-            const values = device.toJSON() as Record<string, unknown>;
-
-            return {
-                ...values,
-                local_access_url: buildIpv4AccessUrl(values.ip_address, values.access_port),
-                external_access_url: buildIpv4AccessUrl(values.external_ip_address, values.access_port)
-            };
-        });
-
-        return res.render("home/index", {
-            devices: renderedDevices,
-            searchTerm,
-            created: req.query.created === "1",
-            updated: req.query.updated === "1"
-        });
+    async ec2(req: Request, res: Response) {
+        return renderDeviceIndex(req, res, true);
     }
 
     create(_req: Request, res: Response) {
@@ -233,7 +279,9 @@ export default class HomeController {
                 macAddress: String(storedValues.mac_address ?? ""),
                 localIpAddress: String(storedValues.ip_address ?? ""),
                 externalIpAddress: String(storedValues.external_ip_address ?? ""),
-                accessPort: String(storedValues.access_port ?? "")
+                accessPort: String(storedValues.access_port ?? ""),
+                ec2InstanceId: String(storedValues.ec2_instance_id ?? ""),
+                awsRegion: String(storedValues.aws_region ?? "")
             };
 
             return res.render("home/edit", { deviceId, error: null, values });
@@ -263,6 +311,26 @@ export default class HomeController {
         }
 
         try {
+            const currentDevice = await devices.findOne({
+                attributes: ["ec2_instance_id", "aws_region"],
+                where: { id: deviceId, status: 1 }
+            });
+
+            if (!currentDevice) {
+                return renderError("Dispositivo nao encontrado.", 404);
+            }
+
+            const scheduleCount = await deviceSchedules.count({ where: { device_id: deviceId } });
+            const currentInstanceId = currentDevice.get("ec2_instance_id");
+            const currentRegion = currentDevice.get("aws_region");
+            const nextInstanceId = validation.data.ec2_instance_id;
+            const nextRegion = validation.data.aws_region;
+            const awsLinkChanged = currentInstanceId !== nextInstanceId || currentRegion !== nextRegion;
+
+            if (scheduleCount > 0 && awsLinkChanged) {
+                return renderError("Remova os agendamentos AWS antes de alterar o vinculo EC2.");
+            }
+
             const [updatedDevices] = await devices.update(validation.data, {
                 where: { id: deviceId, status: 1 }
             });
@@ -362,6 +430,28 @@ export default class HomeController {
         }
 
         try {
+            const device = await devices.findOne({
+                attributes: ["id", "aws_region"],
+                where: { id: deviceId }
+            });
+
+            if (!device) {
+                return res.status(404).json({ error: "Dispositivo nao encontrado." });
+            }
+
+            const schedules = await deviceSchedules.findAll({ where: { device_id: deviceId } });
+            const awsRegion = device.get("aws_region");
+
+            if (typeof awsRegion === "string") {
+                for (const schedule of schedules) {
+                    const schedulerName = schedule.get("scheduler_name");
+
+                    if (typeof schedulerName === "string") {
+                        await deleteEc2Schedule(schedulerName, awsRegion);
+                    }
+                }
+            }
+
             const deletedDevices = await devices.destroy({ where: { id: deviceId } });
 
             if (deletedDevices === 0) {

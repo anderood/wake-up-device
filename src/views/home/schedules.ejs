@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agendamentos · <%= device.name %></title>
+  <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #0E1116;
+      --surface: #171C24;
+      --surface-elevated: #1D2530;
+      --border: #28313C;
+      --text: #F3F1EA;
+      --muted: #9DA8B4;
+      --faint: #6F7B87;
+      --accent: #F4B942;
+      --success: #6ED7A0;
+      --danger: #E47E7E;
+      --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-family: var(--font);
+      background: var(--canvas);
+      color: var(--text);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--canvas); }
+    main { display: flex; flex-direction: column; gap: 28px; width: min(920px, calc(100% - 48px)); margin: 0 auto; padding: 56px 0; }
+    .header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+    .heading { display: flex; flex-direction: column; gap: 8px; }
+    .eyebrow { margin: 0; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.05em; line-height: 1.05; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; }
+    .back, .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 15px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+    .back:hover, .button:hover { color: var(--text); border-color: var(--faint); }
+    .button-primary { border-color: var(--accent); background: var(--accent); color: var(--canvas); font-weight: 700; }
+    .button-danger { border-color: color-mix(in srgb, var(--danger) 60%, transparent); color: var(--danger); }
+    .layout { display: flex; align-items: flex-start; gap: 20px; }
+    .card { display: flex; flex: 1; flex-direction: column; gap: 18px; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+    .card h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .card-description { margin: -8px 0 0; color: var(--faint); font-size: 12px; line-height: 1.5; }
+    .form-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+    .field { display: flex; flex: 1 1 180px; flex-direction: column; gap: 7px; min-width: 0; }
+    .field--small { flex-basis: 110px; }
+    label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    input, select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--canvas); color: var(--text); font: inherit; font-size: 14px; }
+    input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 2px; }
+    .mono { font-family: var(--mono); }
+    .days { display: flex; flex-wrap: wrap; gap: 8px; }
+    .day { display: inline-flex; align-items: center; gap: 6px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 12px; cursor: pointer; }
+    .day:has(input:checked) { border-color: var(--accent); color: var(--text); }
+    .day input { width: auto; height: auto; accent-color: var(--accent); }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 4px; color: var(--muted); font-size: 13px; }
+    .switch-row input { width: auto; height: auto; accent-color: var(--accent); }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+    .schedule-list { display: flex; flex-direction: column; gap: 10px; }
+    .schedule { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    .schedule-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .schedule-icon { display: grid; flex-shrink: 0; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+    .schedule-title { margin: 0; font-size: 15px; font-weight: 700; }
+    .schedule-meta { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .schedule-status { margin: 4px 0 0; color: var(--success); font-size: 11px; font-weight: 700; }
+    .schedule[data-enabled="false"] .schedule-status { color: var(--faint); }
+    .schedule[data-status="error"] .schedule-status { color: var(--danger); }
+    .schedule-error { margin: 8px 0 0; color: var(--danger); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+    .schedule-actions { display: flex; flex-shrink: 0; gap: 8px; }
+    .empty { padding: 24px; border: 1px dashed var(--border); border-radius: 12px; color: var(--faint); font-size: 14px; text-align: center; }
+    .alert { padding: 12px 16px; border: 1px solid color-mix(in srgb, var(--danger) 50%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); font-size: 14px; line-height: 1.5; }
+    .hint { margin: 0; color: var(--faint); font-size: 12px; line-height: 1.5; }
+
+    @media (max-width: 720px) {
+      main { width: min(100% - 32px, 920px); padding: 28px 0; }
+      .header { align-items: stretch; flex-direction: column; }
+      .back { width: 100%; }
+      .layout { flex-direction: column; }
+      .card { width: 100%; padding: 18px; }
+      .schedule { align-items: stretch; flex-direction: column; gap: 14px; }
+      .schedule-actions { width: 100%; }
+      .schedule-actions .button { flex: 1; }
+      .actions { flex-direction: column-reverse; }
+      .actions .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="header">
+      <div class="heading">
+        <p class="eyebrow">AWS Scheduler</p>
+        <h1><%= device.name %></h1>
+        <p class="subtitle">Agendamentos recorrentes para <span class="mono"><%= device.ec2_instance_id %></span> em <span class="mono"><%= device.aws_region %></span>.</p>
+      </div>
+      <a class="back" href="/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Voltar</a>
+    </header>
+
+    <% if (error) { %>
+      <div class="alert" role="alert"><%= error %></div>
+    <% } %>
+
+    <section class="layout">
+      <form class="card" method="post" action="<%= editingScheduleId ? `/device/${deviceId}/schedules/${editingScheduleId}/update` : `/device/${deviceId}/schedules` %>">
+        <h2><%= editingScheduleId ? "Editar agendamento" : "Novo agendamento" %></h2>
+        <p class="card-description">O EventBridge Scheduler executará a ação na região da instância, mesmo se esta aplicação estiver parada.</p>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="action">Ação</label>
+            <select id="action" name="action">
+              <option value="start" <%= values.action === "start" ? "selected" : "" %>>Ligar instância</option>
+              <option value="stop" <%= values.action === "stop" ? "selected" : "" %>>Desligar instância</option>
+            </select>
+          </div>
+          <div class="field field--small">
+            <label for="hour">Hora</label>
+            <input id="hour" class="mono" type="number" name="hour" value="<%= values.hour %>" min="0" max="23" required>
+          </div>
+          <div class="field field--small">
+            <label for="minute">Minuto</label>
+            <input id="minute" class="mono" type="number" name="minute" value="<%= values.minute %>" min="0" max="59" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Dias da semana</label>
+          <div class="days">
+            <% const dayOptions = [{ value: "MON", label: "Seg" }, { value: "TUE", label: "Ter" }, { value: "WED", label: "Qua" }, { value: "THU", label: "Qui" }, { value: "FRI", label: "Sex" }, { value: "SAT", label: "Sab" }, { value: "SUN", label: "Dom" }]; %>
+            <% dayOptions.forEach(day => { %>
+              <label class="day"><input type="checkbox" name="days" value="<%= day.value %>" <%= values.days.includes(day.value) ? "checked" : "" %>><%= day.label %></label>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="timezone">Fuso horário IANA</label>
+          <input id="timezone" class="mono" type="text" name="timezone" value="<%= values.timezone %>" maxlength="64" placeholder="America/Sao_Paulo" required>
+        </div>
+
+        <label class="switch-row"><span>Agendamento ativo</span><input type="checkbox" name="enabled" value="1" <%= values.enabled ? "checked" : "" %>></label>
+
+        <div class="actions">
+          <% if (editingScheduleId) { %><a class="button" href="/device/<%= deviceId %>/schedules">Cancelar</a><% } %>
+          <button class="button button-primary" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i><%= editingScheduleId ? "Salvar alterações" : "Criar agendamento" %></button>
+        </div>
+      </form>
+
+      <section class="card">
+        <h2>Agendamentos configurados</h2>
+        <p class="card-description">Cada item é sincronizado como um recurso independente na AWS.</p>
+        <div class="schedule-list">
+          <% if (schedules.length === 0) { %>
+            <p class="empty">Nenhum agendamento configurado.</p>
+          <% } %>
+          <% schedules.forEach(schedule => { %>
+            <article class="schedule" data-enabled="<%= schedule.enabled %>" data-status="<%= schedule.sync_status %>">
+              <div class="schedule-main">
+                <span class="schedule-icon"><i class="fa-solid <%= schedule.action === "start" ? "fa-power-off" : "fa-moon" %>" aria-hidden="true"></i></span>
+                <div>
+                  <p class="schedule-title"><%= schedule.actionLabel %> às <span class="mono"><%= schedule.time %></span></p>
+                  <p class="schedule-meta"><%= schedule.daysText %> · <%= schedule.timezone %></p>
+                  <p class="schedule-status"><%= schedule.statusLabel %></p>
+                  <% if (schedule.last_sync_error) { %><p class="schedule-error"><%= schedule.last_sync_error %></p><% } %>
+                </div>
+              </div>
+              <div class="schedule-actions">
+                <a class="button" href="/device/<%= deviceId %>/schedules?edit=<%= schedule.id %>" aria-label="Editar agendamento" title="Editar agendamento"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                <form method="post" action="/device/<%= deviceId %>/schedules/<%= schedule.id %>/toggle">
+                  <button class="button" type="submit"><i class="fa-solid <%= schedule.enabled ? "fa-pause" : "fa-play" %>" aria-hidden="true"></i><%= schedule.enabled ? "Desativar" : "Ativar" %></button>
+                </form>
+                <button class="button button-danger delete-schedule" type="button" data-delete-url="/device/<%= deviceId %>/schedules/<%= schedule.id %>" aria-label="Excluir agendamento" title="Excluir agendamento"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+        <p class="hint">A instância pode levar alguns minutos para refletir a mudança de estado. Parar uma EC2 não elimina seus volumes EBS, mas um IPv4 público pode mudar sem Elastic IP.</p>
+      </section>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll(".delete-schedule").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!window.confirm("Excluir este agendamento também na AWS?")) return;
+        button.disabled = true;
+        const response = await fetch(button.dataset.deleteUrl, { method: "DELETE" });
+        if (response.ok) window.location.href = response.url;
+        else { button.disabled = false; window.alert("Não foi possível excluir o agendamento."); }
+      });
+    });
+  </script>
+</body>
+</html>

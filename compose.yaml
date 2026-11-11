@@ -2,9 +2,14 @@ x-app: &app
   image: wake-up-device-app
   build:
     context: .
+    network: host
   environment:
     DB_STORAGE: /data/wake-up-device.sqlite
     WOL_BROADCAST_ADDRESS: ${WOL_BROADCAST_ADDRESS:-255.255.255.255}
+    AWS_REGION: ${AWS_REGION:-us-east-1}
+    AWS_SCHEDULER_ROLE_ARN: ${AWS_SCHEDULER_ROLE_ARN:-}
+    AWS_SCHEDULER_GROUP_NAME: ${AWS_SCHEDULER_GROUP_NAME:-default}
+    AWS_SCHEDULER_NAME_PREFIX: ${AWS_SCHEDULER_NAME_PREFIX:-wake-up-device}
   volumes:
     - sqlite-data:/data
 

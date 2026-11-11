@@ -19,6 +19,8 @@ routes, schema, runtime behavior, or verification commands change.
 - Migrations: Umzug with Sequelize storage.
 - Network operations: `wake_on_lan` for UDP magic packets and the system `ping`
   command through Node's `execFile`.
+- AWS integration: AWS SDK for JavaScript v3 with EC2 validation and
+  EventBridge Scheduler universal targets for recurring start/stop actions.
 - Local orchestration: Docker Compose with separate `app` and `migrate` services
   sharing one persistent SQLite volume.
 
@@ -41,18 +43,25 @@ routes, schema, runtime behavior, or verification commands change.
   external access URL generation, Wake-on-LAN, and ping request handling.
 - `src/controllers/api.controller.ts`: current API welcome response.
 - `src/models/device.ts`: Sequelize model for the `devices` table.
+- `src/models/device-schedule.ts`: Sequelize model for recurring AWS schedules.
 - `src/database/database.ts`: Sequelize/SQLite connection using `DB_STORAGE`.
 - `src/database/migrate.ts`: Umzug runner.
 - `src/database/migrations/`: schema migrations, including initial table
   creation for an empty SQLite file.
+- `src/config/aws.ts`: AWS Scheduler environment configuration.
 - `src/services/wake-on-lan.ts`: Promise wrapper around the CommonJS
   `wake_on_lan` package.
 - `src/services/ping.ts`: validated IPv4 ping execution and in-flight request
   reuse.
+- `src/services/eventbridge-scheduler.ts`: EventBridge Scheduler CRUD and EC2
+  target construction.
+- `src/controllers/schedule.controller.ts`: recurring AWS schedule CRUD and
+  synchronization state handling.
 - `src/views/home/index.ejs`: device cards and browser-side wake, ping, and
   delete flows.
 - `src/views/home/add.ejs`: create form.
 - `src/views/home/edit.ejs`: edit form.
+- `src/views/home/schedules.ejs`: recurring AWS schedule management page.
 - `compose.yaml`: application and migration service definitions plus the shared
   SQLite volume.
 
@@ -61,6 +70,7 @@ routes, schema, runtime behavior, or verification commands change.
 - `server.ts` enables `express.urlencoded({ extended: false })` for HTML form
   submissions. It does not enable `express.json()` or multipart parsing.
 - `GET /`: list active devices where `status = 1`.
+- `GET /ec2`: list active devices with a configured `ec2_instance_id`, using the same card interface and search behavior.
 - `GET /add/create`: render the create form.
 - `POST /add`: validate and create a device, then redirect to `/?created=1`.
 - `GET /device/:id/edit`: load an active device and render the edit form.
@@ -70,6 +80,14 @@ routes, schema, runtime behavior, or verification commands change.
 - `POST /device/:id/ping`: ping the stored IPv4 address and return
   `{ online: boolean }`.
 - `DELETE /device/:id`: permanently delete a device and return `204`.
+- `GET /device/:id/schedules`: render recurring AWS schedules for an EC2-linked
+  device.
+- `POST /device/:id/schedules`: create and synchronize a recurring schedule.
+- `POST /device/:id/schedules/:scheduleId/update`: update and synchronize a
+  recurring schedule.
+- `POST /device/:id/schedules/:scheduleId/toggle`: enable or disable a schedule.
+- `DELETE /device/:id/schedules/:scheduleId`: delete the AWS schedule and its
+  local record.
 - `GET /device`: placeholder endpoint that returns `501`.
 - `GET /api`: return the current welcome JSON response.
 
@@ -91,6 +109,9 @@ or soft-delete behavior.
   enabled.
 - The `enableWake` and `enableAccess` checkboxes are hidden inputs styled as
   switch toggles labeled `Ativado` and `Porta configurada`.
+- The device form optionally accepts an EC2 instance ID and AWS region. Both
+  values are required together and are stored as `ec2_instance_id` and
+  `aws_region`.
 - The `Ativado` toggle controls whether the MAC field is enabled and submitted.
   When it is unchecked, the server ignores and clears `macAddress`.
 - The `Porta configurada` toggle controls only whether the access port field is
@@ -111,6 +132,8 @@ or soft-delete behavior.
 - MAC addresses accept colon or hyphen separators, are normalized to uppercase
   colon notation, and must match `AA:BB:CC:DD:EE:FF`.
 - A device may store any combination of MAC, local IPv4, and external IPv4.
+- A device may optionally store an EC2 instance ID and AWS region for recurring
+  start/stop schedules.
 
 ## Database Schema
 
@@ -125,7 +148,15 @@ The application currently uses one table, `devices`:
 | `ip_address` | `VARCHAR(15)` | Yes | None | Local IPv4 used for access and reachability checks |
 | `external_ip_address` | `VARCHAR(15)` | Yes | None | External IPv4 used for access |
 | `access_port` | `INTEGER` | Yes | None | Shared TCP port for local and external access links |
+| `ec2_instance_id` | `VARCHAR(19)` | Yes | None | Optional linked AWS EC2 instance |
+| `aws_region` | `VARCHAR(32)` | Yes | None | AWS region for the linked EC2 instance |
 | `status` | `INTEGER` | No | `1` | Only rows with value `1` are listed and editable |
+
+The `device_schedules` table stores recurring AWS actions with `action` (`start`
+or `stop`), AWS Scheduler cron `expression`, IANA `timezone`, `enabled`, stable
+Scheduler identifiers, and synchronization status/error fields. The application
+uses EventBridge Scheduler so execution does not depend on the Node process
+being alive at the scheduled time.
 
 Important schema behavior:
 
@@ -166,7 +197,7 @@ Important schema behavior:
 ## View Behavior
 
 - `index.ejs` displays only database-backed device values escaped by EJS.
-- Search filters active devices by `name` and `type` only.
+- Search filters active devices by `name` and `type` only; `/ec2` applies the additional EC2-link filter.
 - Cards independently show Font Awesome icon actions for `Ligar` when a MAC is
   available, `Local` for a local IP and port, `Externo` for an external IP and
   port, and `Editar` for every device.
@@ -191,6 +222,10 @@ Important schema behavior:
 - The Docker `app` service runs with `network_mode: host` so Wake-on-LAN
   broadcasts leave the host's network interface directly instead of staying
   inside Docker's bridge network. It listens on host port `3000`.
+- The Docker `app` and `migrate` services receive AWS Scheduler configuration
+  through `AWS_REGION`, `AWS_SCHEDULER_ROLE_ARN`, `AWS_SCHEDULER_GROUP_NAME`,
+  and `AWS_SCHEDULER_NAME_PREFIX`. AWS credentials must come from the SDK
+  default credential chain and must not be stored in SQLite.
 - Compose stores `/data/wake-up-device.sqlite` in the `sqlite-data` volume and
   waits for successful migrations before starting the application service.
 
@@ -213,6 +248,9 @@ Important schema behavior:
 - The application has no authentication, authorization, rate limiting, or CSRF
   protection. It must remain restricted to a trusted network unless those
   controls are added.
+- AWS schedule routes intentionally have no authentication in the initial
+  implementation. Any user who can reach the application can create, modify,
+  or delete configured EC2 schedules.
 - Continue using parameterized Sequelize operations rather than constructing SQL
   from request values.
 - Validate route IDs and all network addresses on the server.
