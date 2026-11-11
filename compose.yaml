@@ -3,16 +3,8 @@ x-app: &app
   build:
     context: .
   environment:
-    APP_PORT: ${APP_PORT:-3000}
     DB_STORAGE: /data/wake-up-device.sqlite
     WOL_BROADCAST_ADDRESS: ${WOL_BROADCAST_ADDRESS:-255.255.255.255}
-    SESSION_SECRET: ${SESSION_SECRET:-}
-    SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
-    OIDC_ISSUER: ${OIDC_ISSUER:-}
-    OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
-    OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
-    OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-http://localhost:3000/auth/callback}
-    AWS_REGION_FILE: /app/config/aws-ec2-regions.json
   volumes:
     - sqlite-data:/data
 

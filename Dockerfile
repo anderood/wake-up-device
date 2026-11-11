@@ -11,7 +11,6 @@ RUN apk add --no-cache --virtual .build-deps python3 make g++ \
 
 COPY server.ts tsconfig.json ./
 COPY src ./src
-COPY config ./config
 
 EXPOSE 3000
 

@@ -7,7 +7,6 @@
     "db:migrate": "node src/database/migrate.ts",
     "dev": "nodemon server.ts",
     "start": "node server.ts",
-    "test:web": "node --test tests/ec2-web.contract.test.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,10 +18,7 @@
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
-    "express-session": "^1.19.0",
-    "openid-client": "^6.8.9",
     "nodemon": "^3.1.14",
-    "csrf-sync": "^4.2.1",
     "sequelize": "^6.37.8",
     "sqlite3": "^6.0.1",
     "umzug": "^3.8.3",
@@ -30,7 +26,6 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/express-session": "^1.18.2",
     "@types/node": "^26.1.1",
     "typescript": "^7.0.2"
   }

@@ -10,12 +10,3 @@ README.md
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-*.egg-info/
-.pytest_cache/
-coverage/
-.coverage
-.env.*
