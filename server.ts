@@ -12,6 +12,7 @@ const fontAwesomeRoot = new URL("./node_modules/@fortawesome/fontawesome-free/",
 app.use("/assets/fontawesome/css", express.static(fileURLToPath(new URL("css/", fontAwesomeRoot))));
 app.use("/assets/fontawesome/webfonts", express.static(fileURLToPath(new URL("webfonts/", fontAwesomeRoot))));
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use("/api", routes);
 app.use("/", web);
 

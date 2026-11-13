@@ -166,14 +166,16 @@ export default class HomeController {
             devices: renderedDevices,
             searchTerm,
             created: req.query.created === "1",
-            updated: req.query.updated === "1"
+            updated: req.query.updated === "1",
+            currentSection: "devices"
         });
     }
 
     create(_req: Request, res: Response) {
         return res.render("home/add", {
             error: null,
-            values: emptyDeviceForm
+            values: emptyDeviceForm,
+            currentSection: "devices"
         });
     }
 
@@ -182,7 +184,8 @@ export default class HomeController {
         const validation = validateDeviceForm(values);
         const renderError = (error: string) => res.status(422).render("home/add", {
             error,
-            values
+            values,
+            currentSection: "devices"
         });
 
         if ("error" in validation) {
@@ -199,7 +202,8 @@ export default class HomeController {
             console.error("Nao foi possivel cadastrar o dispositivo.", error);
             return res.status(500).render("home/add", {
                 error: "Nao foi possivel cadastrar o dispositivo. Tente novamente.",
-                values
+                values,
+                currentSection: "devices"
             });
         }
 
@@ -236,7 +240,12 @@ export default class HomeController {
                 accessPort: String(storedValues.access_port ?? "")
             };
 
-            return res.render("home/edit", { deviceId, error: null, values });
+            return res.render("home/edit", {
+                deviceId,
+                error: null,
+                values,
+                currentSection: "devices"
+            });
         } catch (error) {
             console.error("Nao foi possivel carregar o dispositivo.", error);
             return res.status(500).send("Nao foi possivel carregar o dispositivo.");
@@ -255,7 +264,8 @@ export default class HomeController {
         const renderError = (error: string, status = 422) => res.status(status).render("home/edit", {
             deviceId,
             error,
-            values
+            values,
+            currentSection: "devices"
         });
 
         if ("error" in validation) {
