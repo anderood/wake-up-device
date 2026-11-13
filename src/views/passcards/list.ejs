@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senhas | Wake Up Device</title>
+  <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #0e1116;
+      --surface: #171c24;
+      --surface-raised: #1d2530;
+      --border: #28313c;
+      --text: #f3f1ea;
+      --muted: #9da8b4;
+      --subtle: #6f7b87;
+      --accent: #f4b942;
+      --success: #6ed7a0;
+      --danger: #e47e7e;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--canvas);
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--canvas); }
+    main { width: min(1240px, calc(100% - 48px)); margin: 0 auto; padding: 36px 0 64px; }
+    .page-header, .tools, .pagination, .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .page-header { margin-bottom: 28px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.05em; }
+    .subtitle { margin: 10px 0 0; color: var(--muted); }
+    .tools { margin-bottom: 16px; }
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: min(460px, 100%);
+      height: 46px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+    }
+    .search:focus-within { border-color: var(--accent); }
+    .search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+    }
+    .search input::placeholder { color: var(--muted); }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 15px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button:hover { border-color: var(--muted); background: var(--surface-raised); }
+    .button-primary { border-color: var(--accent); background: var(--accent); color: var(--canvas); }
+    .button-primary:hover { border-color: var(--accent); background: var(--accent); filter: brightness(1.06); }
+    .button-danger:hover { border-color: var(--danger); color: var(--danger); }
+    .panel { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    th, td { padding: 16px 18px; border-bottom: 1px solid var(--border); text-align: left; }
+    th {
+      color: var(--subtle);
+      font-size: 12px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    tbody tr:hover { background: var(--surface-raised); }
+    tbody tr:last-child td { border-bottom: 0; }
+    .title-link { color: var(--text); font-weight: 650; text-decoration: none; }
+    .title-link:hover { color: var(--accent); text-decoration: underline; }
+    .groups { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag, .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      padding: 3px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .status.active { border-color: var(--success); color: var(--success); }
+    .status.inactive { border-color: var(--subtle); color: var(--subtle); }
+    .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .action-cell { width: 70px; text-align: right; }
+    .icon-button {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .icon-button:hover { border-color: var(--danger); color: var(--danger); }
+    .empty-state { justify-content: center; min-height: 150px; padding: 24px; color: var(--muted); }
+    .pagination { justify-content: center; margin-top: 18px; }
+    .pagination-info { color: var(--muted); font-size: 14px; }
+    .pagination .button[disabled] { cursor: not-allowed; opacity: .4; }
+    .notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--danger);
+      border-radius: 7px;
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+      color: var(--danger);
+    }
+    @media (max-width: 640px) {
+      main { width: min(100% - 32px, 1240px); padding-top: 24px; }
+      .page-header, .tools { align-items: stretch; flex-direction: column; }
+      .search { width: 100%; }
+      .tools .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <%- include("../partials/navigation", { currentSection }) %>
+  <main>
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Gerenciamento de credenciais</p>
+        <h1>Senhas</h1>
+        <p class="subtitle">Consulte e organize senhas, acessos e informações personalizadas.</p>
+      </div>
+    </header>
+
+    <p class="notice" id="listError" role="alert" hidden></p>
+
+    <div class="tools">
+      <label class="search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span class="visually-hidden">Buscar por título</span>
+        <input id="searchInput" type="search" value="<%= searchTerm %>" placeholder="Buscar por título..." autocomplete="off">
+      </label>
+      <a class="button button-primary" href="/passwords/create">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        Adicionar senha
+      </a>
+    </div>
+
+    <section class="panel table-wrap" aria-label="Lista de senhas">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Título</th>
+            <th scope="col">Grupos</th>
+            <th scope="col">Campos</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="action-cell">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="passwordTableBody">
+          <% if (passcards.length === 0) { %>
+            <tr><td colspan="5"><div class="empty-state">Nenhuma senha encontrada.</div></td></tr>
+          <% } %>
+          <% passcards.forEach((passcard) => { %>
+            <tr>
+              <td><a class="title-link" href="/passwords/<%= passcard.id %>/edit"><%= passcard.title %></a></td>
+              <td>
+                <div class="groups">
+                  <% if (passcard.groupLabels.length === 0) { %>
+                    <span class="tag">Nenhum grupo</span>
+                  <% } %>
+                  <% passcard.groupLabels.forEach((label) => { %>
+                    <span class="tag"><%= label %></span>
+                  <% }) %>
+                </div>
+              </td>
+              <td class="count"><%= passcard.fieldCount %></td>
+              <td><span class="status <%= passcard.status === 1 ? "active" : "inactive" %>"><%= passcard.status === 1 ? "Ativo" : "Inativo" %></span></td>
+              <td class="action-cell">
+                <button class="icon-button delete-button" type="button" data-id="<%= passcard.id %>" data-title="<%= passcard.title %>" aria-label="Excluir <%= passcard.title %>" title="Excluir">
+                  <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <nav class="pagination" aria-label="Paginação">
+      <button class="button" id="previousPage" type="button" <%= pager.page <= 1 ? "disabled" : "" %>>Anterior</button>
+      <span class="pagination-info" id="paginationInfo">Página <%= pager.page %> de <%= pager.page_count %></span>
+      <button class="button" id="nextPage" type="button" <%= pager.page >= pager.page_count ? "disabled" : "" %>>Próxima</button>
+    </nav>
+  </main>
+  <script>
+    const searchInput = document.querySelector("#searchInput");
+    const tableBody = document.querySelector("#passwordTableBody");
+    const listError = document.querySelector("#listError");
+    const previousPage = document.querySelector("#previousPage");
+    const nextPage = document.querySelector("#nextPage");
+    const paginationInfo = document.querySelector("#paginationInfo");
+    let currentPage = <%= pager.page %>;
+    let pageCount = <%= pager.page_count %>;
+    let searchTimer = null;
+
+    function showError(message) {
+      listError.textContent = message;
+      listError.hidden = false;
+    }
+
+    function clearError() {
+      listError.textContent = "";
+      listError.hidden = true;
+    }
+
+    async function getError(response, fallback) {
+      try {
+        const result = await response.json();
+        return typeof result.error === "string" ? result.error : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function renderRows(items) {
+      tableBody.replaceChildren();
+      if (!Array.isArray(items) || items.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 5;
+        cell.innerHTML = '<div class="empty-state">Nenhuma senha encontrada.</div>';
+        row.append(cell);
+        tableBody.append(row);
+        return;
+      }
+
+      items.forEach((password) => {
+        const row = document.createElement("tr");
+        const titleCell = document.createElement("td");
+        const title = document.createElement("a");
+        title.className = "title-link";
+        title.href = `/passwords/${encodeURIComponent(password.id)}/edit`;
+        title.textContent = password.title;
+        titleCell.append(title);
+
+        const groupsCell = document.createElement("td");
+        const groups = document.createElement("div");
+        groups.className = "groups";
+        const labels = Array.isArray(password.groupLabels) ? password.groupLabels : [];
+        (labels.length > 0 ? labels : ["Nenhum grupo"]).forEach((label) => {
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = label;
+          groups.append(tag);
+        });
+        groupsCell.append(groups);
+
+        const countCell = document.createElement("td");
+        countCell.className = "count";
+        countCell.textContent = password.fieldCount;
+
+        const statusCell = document.createElement("td");
+        const status = document.createElement("span");
+        status.className = `status ${password.status === 1 ? "active" : "inactive"}`;
+        status.textContent = password.status === 1 ? "Ativo" : "Inativo";
+        statusCell.append(status);
+
+        const actionCell = document.createElement("td");
+        actionCell.className = "action-cell";
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "icon-button delete-button";
+        deleteButton.type = "button";
+        deleteButton.dataset.id = password.id;
+        deleteButton.dataset.title = password.title;
+        deleteButton.setAttribute("aria-label", `Excluir ${password.title}`);
+        deleteButton.title = "Excluir";
+        deleteButton.innerHTML = '<i class="fa-solid fa-trash-can" aria-hidden="true"></i>';
+        actionCell.append(deleteButton);
+        row.append(titleCell, groupsCell, countCell, statusCell, actionCell);
+        tableBody.append(row);
+      });
+    }
+
+    async function loadPasswords(page = 1) {
+      const url = new URL("/api/passwords", window.location.origin);
+      const query = searchInput.value.trim();
+      if (query) url.searchParams.set("q", query);
+      url.searchParams.set("page", page);
+
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(await getError(response, "Não foi possível carregar as senhas."));
+
+      const result = await response.json();
+      currentPage = result.pager.page;
+      pageCount = result.pager.page_count;
+      renderRows(result.data);
+      paginationInfo.textContent = `Página ${currentPage} de ${pageCount}`;
+      previousPage.disabled = currentPage <= 1;
+      nextPage.disabled = currentPage >= pageCount;
+    }
+
+    tableBody.addEventListener("click", async (event) => {
+      const button = event.target.closest(".delete-button");
+      if (!button) return;
+      const title = button.dataset.title || "esta senha";
+      if (!window.confirm(`Excluir "${title}"? Essa ação não pode ser desfeita.`)) return;
+
+      button.disabled = true;
+      try {
+        const response = await fetch(`/api/passwords/${encodeURIComponent(button.dataset.id)}`, {
+          method: "DELETE",
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) throw new Error(await getError(response, "Não foi possível excluir a senha."));
+        await loadPasswords(currentPage);
+      } catch (error) {
+        button.disabled = false;
+        showError(error instanceof Error ? error.message : "Não foi possível excluir a senha.");
+      }
+    });
+
+    searchInput.addEventListener("input", () => {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(async () => {
+        try {
+          clearError();
+          await loadPasswords(1);
+        } catch (error) {
+          showError(error instanceof Error ? error.message : "Não foi possível carregar as senhas.");
+        }
+      }, 180);
+    });
+
+    previousPage.addEventListener("click", async () => {
+      if (currentPage <= 1) return;
+      try {
+        clearError();
+        await loadPasswords(currentPage - 1);
+      } catch (error) {
+        showError(error instanceof Error ? error.message : "Não foi possível carregar as senhas.");
+      }
+    });
+
+    nextPage.addEventListener("click", async () => {
+      if (currentPage >= pageCount) return;
+      try {
+        clearError();
+        await loadPasswords(currentPage + 1);
+      } catch (error) {
+        showError(error instanceof Error ? error.message : "Não foi possível carregar as senhas.");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -39,27 +39,38 @@ routes, schema, runtime behavior, or verification commands change.
 - `src/router/routes.ts`: API routes mounted at `/api`.
 - `src/controllers/home.controller.ts`: device CRUD, validation, local and
   external access URL generation, Wake-on-LAN, and ping request handling.
+- `src/controllers/passcards.controller.ts`: Passcards web rendering, search,
+  validation, JSON API, dynamic field persistence, deletion, and value
+  decryption.
 - `src/controllers/api.controller.ts`: current API welcome response.
 - `src/models/device.ts`: Sequelize model for the `devices` table.
+- `src/models/passcard.ts`: Sequelize model for the `passcards` table.
+- `src/models/passcard-field.ts`: Sequelize model for the `passcardsfields` table.
 - `src/database/database.ts`: Sequelize/SQLite connection using `DB_STORAGE`.
 - `src/database/migrate.ts`: Umzug runner.
 - `src/database/migrations/`: schema migrations, including initial table
   creation for an empty SQLite file.
 - `src/services/wake-on-lan.ts`: Promise wrapper around the CommonJS
   `wake_on_lan` package.
+- `src/services/passcard-encryption.ts`: AES-256-GCM encryption and legacy
+  plaintext fallback for Passcards field values.
 - `src/services/ping.ts`: validated IPv4 ping execution and in-flight request
   reuse.
 - `src/views/home/index.ejs`: device cards and browser-side wake, ping, and
   delete flows.
 - `src/views/home/add.ejs`: create form.
 - `src/views/home/edit.ejs`: edit form.
+- `src/views/passcards/list.ejs`: Passcards search, paginated list, and delete UI.
+- `src/views/passcards/form.ejs`: Passcards create/edit form and dynamic fields UI.
+- `src/views/partials/navigation.ejs`: Devices/Passcards navigation menu.
 - `compose.yaml`: application and migration service definitions plus the shared
   SQLite volume.
 
 ## HTTP And Routing Contracts
 
 - `server.ts` enables `express.urlencoded({ extended: false })` for HTML form
-  submissions. It does not enable `express.json()` or multipart parsing.
+  submissions and `express.json()` for the Passcards API. It does not enable
+  multipart parsing.
 - `GET /`: list active devices where `status = 1`.
 - `GET /add/create`: render the create form.
 - `POST /add`: validate and create a device, then redirect to `/?created=1`.
@@ -71,17 +82,30 @@ routes, schema, runtime behavior, or verification commands change.
   `{ online: boolean }`.
 - `DELETE /device/:id`: permanently delete a device and return `204`.
 - `GET /device`: placeholder endpoint that returns `501`.
+- `GET /passwords`: render the Passcards list.
+- `GET /passwords/create`: render the Passcards creation form.
+- `GET /passwords/:id/edit`: render the Passcards edit form.
+- `GET /passwords/:id`: redirect to the edit form for compatibility.
 - `GET /api`: return the current welcome JSON response.
+- `GET /api/passwords`: list passcards with title search and pagination,
+  including group labels and current field counts.
+- `GET /api/passwords/:id`: return a passcard and its active decrypted fields.
+- `POST /api/passwords`: create a passcard and its validated fields.
+- `PATCH /api/passwords/:id` and `PUT /api/passwords/:id`: update a passcard;
+  submitted fields replace the active field versions.
+- `DELETE /api/passwords/:id`: permanently delete a passcard and all field
+  versions.
 
 There is no CSV import route, file upload middleware, JSON API for device CRUD,
 or soft-delete behavior.
 
 ## Forms And Rendering
 
-- Forms are rendered on the server with EJS and submitted as
-  `application/x-www-form-urlencoded` requests.
-- Create and edit views duplicate their markup and inline script; there is no
-  shared form partial at present.
+- Device forms are rendered on the server with EJS and submitted as
+  `application/x-www-form-urlencoded` requests. Passcards forms are rendered
+  with EJS and submitted by browser `fetch` as JSON.
+- Device create/edit views duplicate their markup and inline script. Passcards
+  use one shared `form.ejs` with create/edit data supplied by the controller.
 - The form is grouped into three bordered sections separated by a bottom border:
   `Identificação` (name and type), `Wake-on-LAN` (the wake toggle and MAC), and
   `Acesso` (the access toggle, local IP, external IP, and port).
@@ -111,6 +135,7 @@ or soft-delete behavior.
 - MAC addresses accept colon or hyphen separators, are normalized to uppercase
   colon notation, and must match `AA:BB:CC:DD:EE:FF`.
 - A device may store any combination of MAC, local IPv4, and external IPv4.
+- The Passcards workspace uses browser `fetch` with JSON for its API calls.
 
 ## Database Schema
 
@@ -126,6 +151,15 @@ The application currently uses one table, `devices`:
 | `external_ip_address` | `VARCHAR(15)` | Yes | None | External IPv4 used for access |
 | `access_port` | `INTEGER` | Yes | None | Shared TCP port for local and external access links |
 | `status` | `INTEGER` | No | `1` | Only rows with value `1` are listed and editable |
+
+The application also uses:
+
+- `passcards`: title, notes, status, optional group JSON, optional owner/client
+  IDs, and audit timestamps/user IDs.
+- `passcardsfields`: field type, legacy/fallback `value`, encrypted `value_e`,
+  row-version `status`, individual `field_status`, field `position`, passcard
+  ID, and audit timestamps/user IDs. Updating a card inactivates its previous
+  active field versions and inserts new rows.
 
 Important schema behavior:
 
@@ -144,6 +178,8 @@ Important schema behavior:
   remove columns because Sequelize may rebuild the table internally.
 - The SQLite file must remain on persistent storage. The Docker `app` and
   `migrate` services must always mount the same volume and storage path.
+- Passcard deletion is permanent. A field's `status` is independent from the
+  row-version `status` used to retain historical field versions.
 
 ## Wake-on-LAN And Ping
 
@@ -162,11 +198,16 @@ Important schema behavior:
 - Missing ping responses are not definitive because a device may block ICMP.
 - Local development requires the `ping` command. The Docker image installs it
   through Alpine's `iputils` package.
+- `PASSCARD_ENCRYPTION_KEY` configures AES-256-GCM for Passcards. If it is empty
+  or encryption fails, new field values use the legacy plaintext fallback.
 
 ## View Behavior
 
 - `index.ejs` displays only database-backed device values escaped by EJS.
 - Search filters active devices by `name` and `type` only.
+- Passcards search filters cards by `title` and displays 20 results per page.
+- Passcards list rows display title, profile tags, current field count, active or
+  inactive status, and a confirmed permanent-delete action.
 - Cards independently show Font Awesome icon actions for `Ligar` when a MAC is
   available, `Local` for a local IP and port, `Externo` for an external IP and
   port, and `Editar` for every device.
@@ -179,6 +220,12 @@ Important schema behavior:
   request and optional ping polling are in progress.
 - MAC devices receive optional online confirmation through local-IP ping polling.
 - Permanent deletion uses browser `fetch` after a confirmation dialog.
+- Passcard values are visible in the editor and persisted-value preview. When
+  `PASSCARD_ENCRYPTION_KEY` is configured, the backend stores field values
+  encrypted with AES-256-GCM and decrypts them for API output.
+- Passcard forms require a title and at least one access profile. Each custom
+  field requires a label and value, has an independent active/inactive status,
+  and is ordered by its displayed position.
 - Keep pages functional on desktop and mobile and preserve the existing visual
   language unless a redesign is explicitly requested.
 
@@ -188,6 +235,7 @@ Important schema behavior:
 - `DB_STORAGE` configures the SQLite file path and defaults locally to
   `wake-up-device.sqlite`.
 - `WOL_BROADCAST_ADDRESS` configures the Wake-on-LAN broadcast target.
+- `PASSCARD_ENCRYPTION_KEY` configures encryption for Passcards field values.
 - The Docker `app` service runs with `network_mode: host` so Wake-on-LAN
   broadcasts leave the host's network interface directly instead of staying
   inside Docker's bridge network. It listens on host port `3000`.
@@ -207,6 +255,9 @@ Important schema behavior:
   successful verification command.
 - For EJS changes, render the affected template with representative values or
   exercise the relevant page in addition to type-checking.
+- Passcards verification should include migration, list, create, show, search,
+  pagination, update, delete, field validation/status/order, and
+  encrypted-value round-trip checks.
 
 ## Security Constraints
 

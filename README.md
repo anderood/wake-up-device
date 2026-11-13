@@ -13,6 +13,10 @@ associados ao item.
 - Acoes dos cards representadas por icones do Font Awesome carregados localmente.
 - Interface web responsiva renderizada no servidor.
 - Persistencia dos dados em um arquivo SQLite.
+- Menu de navegacao entre **Devices** e **Passcards**.
+- Cadastro, pesquisa e edicao de password cards com campos dinamicos e notas.
+- Valores dos campos de passcards criptografados quando `PASSCARD_ENCRYPTION_KEY`
+  esta configurada.
 
 ## Iniciar com Docker
 
@@ -62,6 +66,7 @@ Copie os valores necessarios de `.env.example` para um arquivo `.env`:
 | `APP_PORT` | Porta publicada pelo Docker Compose | `3000` |
 | `DB_STORAGE` | Caminho do arquivo SQLite no desenvolvimento local | `wake-up-device.sqlite` |
 | `WOL_BROADCAST_ADDRESS` | Endereco de broadcast usado pelo Wake-on-LAN | `255.255.255.255` |
+| `PASSCARD_ENCRYPTION_KEY` | Chave usada para criptografar valores dos passcards | vazio |
 
 `APP_PORT` altera somente a porta publicada pelo Docker Compose. O servidor
 dentro do container continua ouvindo na porta `3000`.
@@ -83,6 +88,23 @@ O sucesso do envio confirma apenas que o pacote foi transmitido. Quando houver
 um IPv4 local cadastrado, a interface fara tentativas de ping por ate 60
 segundos. A falta de resposta nao prova que o dispositivo permaneceu desligado,
 pois ele pode bloquear ICMP.
+
+## Passcards
+
+O modulo **Passcards** esta disponivel em `/passwords` e possui uma listagem
+paginarizada com busca por titulo, grupos, quantidade de campos, status e
+exclusao confirmada. O cadastro e a edicao ficam em `/passwords/create` e
+`/passwords/:id/edit`.
+
+Cada ficha pode conter observacoes, status geral, varios perfis de acesso e
+campos personalizados ordenados. Cada campo possui rotulo, valor e status
+independente. Os perfis disponiveis sao Tecnologia, Financeiro, Lojas, Design,
+Diretoria e Jornalismo. A API esta disponivel em `/api/passwords`.
+
+Configure `PASSCARD_ENCRYPTION_KEY` com um segredo persistente para armazenar os
+valores dos campos usando AES-256-GCM. Sem essa variavel, o recurso continua
+funcional usando o campo legado em texto puro; mantenha a aplicacao restrita a
+uma rede confiavel e configure a chave em ambientes reais.
 
 ## Desenvolvimento local
 

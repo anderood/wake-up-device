@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= password ? "Editar senha" : "Cadastrar senha" %> | Wake Up Device</title>
+  <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #0e1116;
+      --surface: #171c24;
+      --surface-raised: #1d2530;
+      --border: #28313c;
+      --text: #f3f1ea;
+      --muted: #9da8b4;
+      --subtle: #6f7b87;
+      --accent: #f4b942;
+      --success: #6ed7a0;
+      --danger: #e47e7e;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--canvas);
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--canvas); }
+    main { width: min(1060px, calc(100% - 48px)); margin: 0 auto; padding: 32px 0 64px; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); text-decoration: none; }
+    .back-link:hover { color: var(--text); }
+    .page-header { margin: 26px 0 24px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -.04em; }
+    .form-card, .fields-section { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+    .form-section, .fields-section { padding: 24px; }
+    .form-section { display: grid; gap: 18px; }
+    .form-grid { display: grid; gap: 18px; }
+    .field-label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .required { color: var(--accent); }
+    input, textarea, select {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      outline: 0;
+      background: var(--canvas);
+      color: var(--text);
+      font: inherit;
+    }
+    textarea { min-height: 112px; resize: vertical; }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    .has-error input, .has-error textarea, .has-error select,
+    input.has-error, textarea.has-error, select.has-error { border-color: var(--danger); }
+    .field-error { display: block; min-height: 18px; margin-top: 5px; color: var(--danger); font-size: 13px; }
+    .status-field { max-width: 320px; }
+    .profiles-picker { position: relative; }
+    .profile-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      min-height: 46px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--canvas);
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .profile-control:focus { border-color: var(--accent); outline: 0; }
+    .profile-control.has-error { border-color: var(--danger); }
+    .profile-summary { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+    .profile-placeholder { color: var(--muted); }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 27px;
+      padding: 3px 8px;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .chip-remove {
+      display: inline-grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .chip-remove:hover { color: var(--danger); }
+    .profile-menu {
+      position: absolute;
+      z-index: 2;
+      top: calc(100% + 6px);
+      right: 0;
+      left: 0;
+      display: grid;
+      gap: 2px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface-raised);
+      box-shadow: 0 12px 30px rgb(0 0 0 / 30%);
+    }
+    .profile-option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 8px;
+      border-radius: 5px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .profile-option:hover { background: var(--surface); }
+    .profile-option input { width: 16px; min-height: 16px; accent-color: var(--accent); }
+    .profile-actions { display: flex; justify-content: flex-end; margin-top: 4px; }
+    .clear-profiles { min-height: 32px; padding: 0 8px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+    .clear-profiles:hover { color: var(--text); }
+    .help-text { margin: -8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .fields-section { margin-top: 18px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .section-heading h2 { margin: 0; font-size: 1.15rem; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .button:hover { border-color: var(--muted); background: var(--surface-raised); }
+    .button-primary { border-color: var(--accent); background: var(--accent); color: var(--canvas); }
+    .button-primary:hover { border-color: var(--accent); background: var(--accent); filter: brightness(1.06); }
+    .field-list { display: grid; gap: 14px; }
+    .field-card { padding: 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--canvas); }
+    .field-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .field-number { color: var(--accent); font-weight: 700; }
+    .icon-button {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .icon-button:hover { border-color: var(--danger); color: var(--danger); }
+    .field-grid { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(280px, 2fr) minmax(140px, .7fr); gap: 14px; }
+    .secret-input { display: flex; align-items: stretch; }
+    .secret-input input { border-radius: 7px 0 0 7px; }
+    .secret-toggle { flex: 0 0 44px; border: 1px solid var(--border); border-left: 0; border-radius: 0 7px 7px 0; background: var(--surface); color: var(--muted); cursor: pointer; }
+    .secret-toggle:hover { color: var(--text); }
+    .empty-fields { padding: 26px; border: 1px dashed var(--border); color: var(--muted); text-align: center; }
+    .form-actions { display: flex; justify-content: flex-start; gap: 12px; margin-top: 22px; }
+    .notice { margin: 0 0 18px; padding: 12px 14px; border-radius: 7px; font-size: 14px; }
+    .notice.success { border: 1px solid var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+    .notice.error { border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+    @media (max-width: 760px) {
+      main { width: min(100% - 32px, 1060px); padding-top: 24px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .field-grid > label { min-width: 0; }
+    }
+    @media (max-width: 520px) {
+      .form-section, .fields-section { padding: 18px; }
+      .section-heading { align-items: stretch; flex-direction: column; }
+      .section-heading .button { width: 100%; }
+      .form-actions { flex-direction: column-reverse; }
+      .form-actions .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <%- include("../partials/navigation", { currentSection }) %>
+  <main>
+    <a class="back-link" id="backLink" href="/passwords">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Voltar
+    </a>
+
+    <header class="page-header">
+      <p class="eyebrow"><%= password ? "Editar senha" : "Cadastrar senha" %></p>
+      <h1><%= password ? "EDITAR SENHA" : "CADASTRAR SENHA" %></h1>
+    </header>
+
+    <% if (successMessage) { %>
+      <p class="notice success" role="status"><%= successMessage %></p>
+    <% } %>
+    <p class="notice error" id="formError" role="alert" hidden></p>
+
+    <form class="form-card" id="credentialForm" novalidate>
+      <section class="form-section" aria-labelledby="generalHeading">
+        <h2 id="generalHeading" class="visually-hidden">Informações gerais</h2>
+        <label>
+          <span class="field-label">Título <span class="required">*</span></span>
+          <input id="title" name="title" type="text" maxlength="255" value="<%= password ? password.title : "" %>" autocomplete="off">
+          <small class="field-error" data-error-for="title"></small>
+        </label>
+        <label>
+          <span class="field-label">Observações</span>
+          <textarea id="notes" name="obs"><%= password ? (password.obs || "") : "" %></textarea>
+          <small class="field-error" data-error-for="obs"></small>
+        </label>
+        <label class="status-field">
+          <span class="field-label">Status</span>
+          <select id="status" name="status">
+            <option value="1" <%= !password || password.status === 1 ? "selected" : "" %>>Ativo</option>
+            <option value="0" <%= password && password.status === 0 ? "selected" : "" %>>Inativo</option>
+          </select>
+          <small class="field-error" data-error-for="status"></small>
+        </label>
+        <div>
+          <span class="field-label">Perfis com acesso <span class="required">*</span></span>
+          <div class="profiles-picker" id="profilesPicker">
+            <button class="profile-control" id="profileControl" type="button" aria-expanded="false" aria-controls="profileMenu">
+              <span class="profile-summary" id="profileSummary"></span>
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="profile-menu" id="profileMenu" hidden>
+              <% profileOptions.forEach((profile) => { %>
+                <label class="profile-option">
+                  <input type="checkbox" value="<%= profile.id %>" data-label="<%= profile.label %>">
+                  <span><%= profile.label %></span>
+                </label>
+              <% }) %>
+              <div class="profile-actions">
+                <button class="clear-profiles" id="clearProfiles" type="button">Limpar seleção</button>
+              </div>
+            </div>
+          </div>
+          <small class="field-error" data-error-for="groups"></small>
+          <p class="help-text">Apenas administradores com um desses perfis (e com role 'admin' ou 'colaborador') poderão acessar esta senha. Superadmins têm acesso irrestrito.</p>
+        </div>
+      </section>
+    </form>
+
+    <section class="fields-section" aria-labelledby="fieldsHeading">
+      <div class="section-heading">
+        <h2 id="fieldsHeading">CAMPOS</h2>
+        <button class="button" id="addField" type="button">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          Adicionar campo
+        </button>
+      </div>
+      <div class="field-list" id="fieldList"></div>
+    </section>
+
+    <div class="form-actions">
+      <button class="button button-primary" id="saveButton" type="submit" form="credentialForm">
+        <i class="fa-solid fa-check" aria-hidden="true"></i>
+        Salvar
+      </button>
+    </div>
+  </main>
+  <script>
+    const initialPassword = <%- JSON.stringify(password).replace(/</g, "\\u003c") %>;
+    const profileOptions = <%- JSON.stringify(profileOptions).replace(/</g, "\\u003c") %>;
+    const isEdit = Boolean(initialPassword);
+    const form = document.querySelector("#credentialForm");
+    const titleInput = document.querySelector("#title");
+    const notesInput = document.querySelector("#notes");
+    const statusInput = document.querySelector("#status");
+    const fieldList = document.querySelector("#fieldList");
+    const addFieldButton = document.querySelector("#addField");
+    const saveButton = document.querySelector("#saveButton");
+    const formError = document.querySelector("#formError");
+    const backLink = document.querySelector("#backLink");
+    const profileControl = document.querySelector("#profileControl");
+    const profileMenu = document.querySelector("#profileMenu");
+    const profileSummary = document.querySelector("#profileSummary");
+    const clearProfilesButton = document.querySelector("#clearProfiles");
+    let dirty = false;
+    let nextFieldKey = 1;
+
+    function markDirty() {
+      dirty = true;
+    }
+
+    function parseGroups(value) {
+      if (Array.isArray(value)) return value.map(Number).filter(Number.isInteger);
+      if (typeof value !== "string") return [];
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isInteger) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function selectedGroups() {
+      return [...profileMenu.querySelectorAll('input[type="checkbox"]:checked')].map((input) => Number(input.value));
+    }
+
+    function renderProfileSummary() {
+      profileSummary.replaceChildren();
+      const selected = [...profileMenu.querySelectorAll('input[type="checkbox"]:checked')];
+      if (selected.length === 0) {
+        const placeholder = document.createElement("span");
+        placeholder.className = "profile-placeholder";
+        placeholder.textContent = "Selecione um ou mais perfis";
+        profileSummary.append(placeholder);
+        return;
+      }
+
+      selected.forEach((input) => {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.append(document.createTextNode(input.dataset.label || input.value));
+        const remove = document.createElement("button");
+        remove.className = "chip-remove";
+        remove.type = "button";
+        remove.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+        remove.setAttribute("aria-label", `Remover ${input.dataset.label || "perfil"}`);
+        remove.addEventListener("click", (event) => {
+          event.stopPropagation();
+          input.checked = false;
+          renderProfileSummary();
+          markDirty();
+        });
+        chip.append(remove);
+        profileSummary.append(chip);
+      });
+    }
+
+    function setSelectedGroups(groups) {
+      const selected = new Set(groups);
+      profileMenu.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+        input.checked = selected.has(Number(input.value));
+        input.addEventListener("change", () => {
+          renderProfileSummary();
+          markDirty();
+        });
+      });
+      renderProfileSummary();
+    }
+
+    function clearErrors() {
+      formError.hidden = true;
+      formError.textContent = "";
+      document.querySelectorAll(".field-error").forEach((element) => { element.textContent = ""; });
+      document.querySelectorAll(".has-error").forEach((element) => element.classList.remove("has-error"));
+    }
+
+    function showGeneralError(message) {
+      formError.textContent = message;
+      formError.hidden = false;
+    }
+
+    function setError(name, message) {
+      const error = document.querySelector(`[data-error-for="${name}"]`);
+      if (error) error.textContent = message;
+      const input = document.querySelector(`#${name}`);
+      if (input) input.classList.add("has-error");
+      if (name === "groups") profileControl.classList.add("has-error");
+    }
+
+    function fieldError(card, selector, message) {
+      if (!card) return;
+      const input = card.querySelector(selector);
+      const error = card.querySelector(`[data-error-for="${selector.slice(1)}"]`);
+      if (input) input.classList.add("has-error");
+      if (error) error.textContent = message;
+    }
+
+    function isSecretLabel(label) {
+      return label.trim().toLocaleLowerCase("pt-BR") === "senha";
+    }
+
+    function syncSecretInput(card) {
+      const typeInput = card.querySelector(".field-type");
+      const valueInput = card.querySelector(".field-value");
+      const toggle = card.querySelector(".secret-toggle");
+      const secret = isSecretLabel(typeInput.value);
+      toggle.hidden = !secret;
+      if (!secret) {
+        valueInput.type = "text";
+        toggle.setAttribute("aria-label", "Mostrar valor");
+        toggle.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
+      } else if (valueInput.type !== "password" && toggle.dataset.revealed !== "true") {
+        valueInput.type = "password";
+      }
+    }
+
+    function collectFields() {
+      return [...fieldList.querySelectorAll(".field-card")].map((card, position) => ({
+        type: card.querySelector(".field-type").value,
+        value: card.querySelector(".field-value").value,
+        status: Number(card.querySelector(".field-status").value),
+        position
+      }));
+    }
+
+    function renderFields(fields) {
+      fieldList.replaceChildren();
+      if (fields.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-fields";
+        empty.textContent = "Nenhum campo adicionado. Use o botão acima para incluir um campo.";
+        fieldList.append(empty);
+        return;
+      }
+
+      fields.forEach((field, index) => {
+        const card = document.createElement("article");
+        card.className = "field-card";
+        card.dataset.fieldKey = field.key || `field-${nextFieldKey++}`;
+        card.innerHTML = `
+          <div class="field-card-header">
+            <span class="field-number">#${index + 1}</span>
+            <button class="icon-button remove-field" type="button" aria-label="Excluir campo ${index + 1}" title="Excluir campo">
+              <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="field-grid">
+            <label>
+              <span class="field-label">Tipo / Rótulo <span class="required">*</span></span>
+              <input class="field-type" type="text" value="" autocomplete="off">
+              <small class="field-error" data-error-for="field-type"></small>
+            </label>
+            <label>
+              <span class="field-label">Valor <span class="required">*</span></span>
+              <span class="secret-input">
+                <input class="field-value" type="text" value="" autocomplete="off">
+                <button class="secret-toggle" type="button" aria-label="Mostrar valor">
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
+              </span>
+              <small class="field-error" data-error-for="field-value"></small>
+            </label>
+            <label>
+              <span class="field-label">Status</span>
+              <select class="field-status">
+                <option value="1">Ativo</option>
+                <option value="0">Inativo</option>
+              </select>
+              <small class="field-error" data-error-for="field-status"></small>
+            </label>
+          </div>
+        `;
+
+        const typeInput = card.querySelector(".field-type");
+        const valueInput = card.querySelector(".field-value");
+        const statusInput = card.querySelector(".field-status");
+        typeInput.value = field.type || "";
+        valueInput.value = field.value || "";
+        statusInput.value = String(field.status === 0 ? 0 : 1);
+
+        card.querySelector(".remove-field").addEventListener("click", () => {
+          const remaining = collectFields();
+          remaining.splice(index, 1);
+          renderFields(remaining);
+          markDirty();
+        });
+        card.querySelector(".secret-toggle").addEventListener("click", () => {
+          const toggle = card.querySelector(".secret-toggle");
+          const input = card.querySelector(".field-value");
+          const revealed = input.type === "text";
+          input.type = revealed ? "password" : "text";
+          toggle.dataset.revealed = revealed ? "false" : "true";
+          toggle.setAttribute("aria-label", revealed ? "Mostrar valor" : "Ocultar valor");
+          toggle.innerHTML = `<i class="fa-solid fa-eye${revealed ? "" : "-slash"}" aria-hidden="true"></i>`;
+        });
+        typeInput.addEventListener("input", () => {
+          syncSecretInput(card);
+          markDirty();
+        });
+        card.querySelectorAll("input, select").forEach((input) => input.addEventListener("change", markDirty));
+        syncSecretInput(card);
+        fieldList.append(card);
+      });
+    }
+
+    function validate() {
+      clearErrors();
+      let valid = true;
+      if (!titleInput.value.trim()) {
+        setError("title", "Informe o título.");
+        valid = false;
+      }
+      if (selectedGroups().length === 0) {
+        setError("groups", "Selecione pelo menos um perfil.");
+        valid = false;
+      }
+
+      const fields = collectFields();
+      fields.forEach((field, index) => {
+        const card = fieldList.querySelectorAll(".field-card")[index];
+        if (!field.type.trim()) {
+          fieldError(card, ".field-type", "Informe o tipo ou rótulo.");
+          valid = false;
+        }
+        if (!field.value.trim()) {
+          fieldError(card, ".field-value", "Informe o valor.");
+          valid = false;
+        }
+        if (![0, 1].includes(field.status)) {
+          fieldError(card, ".field-status", "Selecione um status válido.");
+          valid = false;
+        }
+      });
+      return valid;
+    }
+
+    async function responseError(response) {
+      try {
+        return await response.json();
+      } catch {
+        return { error: "Não foi possível salvar a senha." };
+      }
+    }
+
+    function showServerErrors(result) {
+      clearErrors();
+      if (result.errors && typeof result.errors === "object") {
+        Object.entries(result.errors).forEach(([key, message]) => {
+          const fieldMatch = key.match(/^fields\.(\d+)\.(type|value|status)$/);
+          if (fieldMatch) {
+            const card = fieldList.querySelectorAll(".field-card")[Number(fieldMatch[1])];
+            const selector = fieldMatch[2] === "type" ? ".field-type" : fieldMatch[2] === "value" ? ".field-value" : ".field-status";
+            fieldError(card, selector, message);
+          } else {
+            setError(key, message);
+          }
+        });
+      }
+      showGeneralError(result.error || "Revise os campos destacados.");
+    }
+
+    async function save(event) {
+      event.preventDefault();
+      if (!validate()) {
+        showGeneralError("Revise os campos destacados.");
+        return;
+      }
+
+      clearErrors();
+      saveButton.disabled = true;
+      const originalText = saveButton.textContent;
+      saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Salvando...';
+      const payload = {
+        title: titleInput.value,
+        obs: notesInput.value,
+        status: Number(statusInput.value),
+        groups: selectedGroups(),
+        fields: collectFields()
+      };
+
+      try {
+        const response = await fetch(isEdit ? `/api/passwords/${encodeURIComponent(initialPassword.id)}` : "/api/passwords", {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          showServerErrors(await responseError(response));
+          return;
+        }
+        const result = await response.json();
+        dirty = false;
+        window.location.href = `/passwords/${encodeURIComponent(result.password.id)}/edit?saved=1`;
+      } catch (error) {
+        showGeneralError(error instanceof Error ? error.message : "Não foi possível salvar a senha.");
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalText;
+      }
+    }
+
+    profileControl.addEventListener("click", () => {
+      const open = profileMenu.hidden;
+      profileMenu.hidden = !open;
+      profileControl.setAttribute("aria-expanded", String(open));
+    });
+    clearProfilesButton.addEventListener("click", () => {
+      profileMenu.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+      renderProfileSummary();
+      markDirty();
+    });
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("#profilesPicker")) {
+        profileMenu.hidden = true;
+        profileControl.setAttribute("aria-expanded", "false");
+      }
+    });
+    addFieldButton.addEventListener("click", () => {
+      const fields = collectFields();
+      fields.push({ type: "", value: "", status: 1 });
+      renderFields(fields);
+      markDirty();
+      fieldList.lastElementChild?.querySelector(".field-type")?.focus();
+    });
+    form.addEventListener("submit", save);
+    form.querySelectorAll("input, textarea, select").forEach((input) => input.addEventListener("input", markDirty));
+    form.querySelectorAll("select").forEach((input) => input.addEventListener("change", markDirty));
+    backLink.addEventListener("click", (event) => {
+      if (dirty && !window.confirm("Existem alterações não salvas. Deseja sair?")) {
+        event.preventDefault();
+      }
+    });
+    window.addEventListener("beforeunload", (event) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+
+    setSelectedGroups(parseGroups(initialPassword?.groups));
+    renderFields(Array.isArray(initialPassword?.fields) ? initialPassword.fields : []);
+  </script>
+</body>
+</html>

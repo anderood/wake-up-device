@@ -1,0 +1,61 @@
+<%
+  const activeSection = typeof currentSection === "string" ? currentSection : "";
+%>
+<style>
+  .app-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(1120px, calc(100% - 48px));
+    margin: 0 auto;
+    padding-top: 24px;
+  }
+
+  .app-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 38px;
+    padding: 0 13px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--color-text-secondary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
+
+  .app-nav a:hover {
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .app-nav a.active {
+    border-color: color-mix(in srgb, var(--color-accent-primary) 45%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+    color: var(--color-accent-primary);
+  }
+
+  @media (max-width: 720px) {
+    .app-nav {
+      width: min(100% - 32px, 1120px);
+      padding-top: 16px;
+    }
+
+    .app-nav a {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+</style>
+<nav class="app-nav" aria-label="Navegação principal">
+  <a href="/" class="<%= activeSection === "devices" ? "active" : "" %>">
+    <i class="fa-solid fa-server" aria-hidden="true"></i>
+    <span>Devices</span>
+  </a>
+  <a href="/passwords" class="<%= activeSection === "passcards" ? "active" : "" %>">
+    <i class="fa-solid fa-key" aria-hidden="true"></i>
+    <span>Passcards</span>
+  </a>
+</nav>
