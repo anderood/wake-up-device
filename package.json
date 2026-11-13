@@ -14,8 +14,6 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@aws-sdk/client-ec2": "^3.1166.0",
-    "@aws-sdk/client-scheduler": "^3.1166.0",
     "@fortawesome/fontawesome-free": "^7.3.1",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",

@@ -489,25 +489,6 @@
           </div>
         </section>
 
-        <section class="form-section">
-          <div class="section-header">
-            <div class="section-heading">
-              <h2 class="section-title">AWS EC2</h2>
-              <p class="section-description">Vincule uma instância para criar agendamentos recorrentes de ligar e desligar.</p>
-            </div>
-          </div>
-          <div class="field-grid">
-            <div class="field">
-              <label for="ec2InstanceId">ID da instância</label>
-              <input id="ec2InstanceId" class="mono" type="text" name="ec2InstanceId" value="<%= values.ec2InstanceId %>" maxlength="19" pattern="i-[0-9a-f]{8,17}" placeholder="i-0123456789abcdef0" spellcheck="false">
-            </div>
-            <div class="field">
-              <label for="awsRegion">Região AWS</label>
-              <input id="awsRegion" class="mono" type="text" name="awsRegion" value="<%= values.awsRegion %>" maxlength="32" pattern="[a-z]{2}(-[a-z]+)?-[a-z0-9-]+-[0-9]" placeholder="us-east-1" spellcheck="false">
-            </div>
-          </div>
-        </section>
-
         <div class="form-actions">
           <a class="button-secondary" href="/">Cancelar</a>
           <button class="button-primary" type="submit">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= isEc2Page ? "Instancias EC2" : "Dispositivos" %></title>
+  <title>Dispositivos</title>
   <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
   <style>
     :root {
@@ -75,39 +75,6 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-    }
-
-    .page-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .nav-link {
-      padding: 7px 10px;
-      border: 1px solid transparent;
-      border-radius: var(--radius-sm);
-      color: var(--color-text-tertiary);
-      font-size: var(--text-caption);
-      font-weight: var(--font-weight-semibold);
-      text-decoration: none;
-      transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
-    }
-
-    .nav-link:hover {
-      border-color: var(--color-border);
-      color: var(--color-text-primary);
-    }
-
-    .nav-link[aria-current="page"] {
-      border-color: var(--color-border);
-      background: var(--color-surface);
-      color: var(--color-text-primary);
-    }
-
-    .nav-link:focus-visible {
-      outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 50%, transparent);
-      outline-offset: 2px;
     }
 
     .eyebrow {
@@ -589,12 +556,8 @@
   <main>
     <header class="page-header">
       <div class="page-heading">
-        <p class="eyebrow"><%= isEc2Page ? "AWS compute" : "Network control" %></p>
-        <h1><%= isEc2Page ? "Instancias EC2" : "Dispositivos" %></h1>
-        <nav class="page-nav" aria-label="Filtrar dispositivos">
-          <a class="nav-link" href="/" <% if (!isEc2Page) { %>aria-current="page"<% } %>>Todos</a>
-          <a class="nav-link" href="/ec2" <% if (isEc2Page) { %>aria-current="page"<% } %>>EC2</a>
-        </nav>
+        <p class="eyebrow">Network control</p>
+        <h1>Dispositivos</h1>
       </div>
       <a class="primary-button" href="/add/create">
         <i class="fa-solid fa-plus" aria-hidden="true"></i>
@@ -602,7 +565,7 @@
       </a>
     </header>
 
-    <form class="search-form" action="<%= searchAction %>" method="get" role="search">
+    <form class="search-form" action="/" method="get" role="search">
       <div class="search-field">
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
         <input
@@ -618,7 +581,7 @@
     </form>
 
     <p class="device-count">
-      <%= devices.length %> <%= devices.length === 1 ? "dispositivo cadastrado" : "dispositivos cadastrados" %><%= isEc2Page ? " com vinculo EC2" : "" %>
+      <%= devices.length %> <%= devices.length === 1 ? "dispositivo cadastrado" : "dispositivos cadastrados" %>
     </p>
 
     <% if (created) { %>
@@ -629,9 +592,9 @@
       <p class="flash" role="status">Dispositivo atualizado com sucesso.</p>
     <% } %>
 
-    <section class="device-grid" aria-label="<%= isEc2Page ? "Instancias EC2 cadastradas" : "Dispositivos cadastrados" %>">
+    <section class="device-grid" aria-label="Dispositivos cadastrados">
       <% if (devices.length === 0) { %>
-        <p class="empty-message"><%= searchTerm ? "Nenhum dispositivo encontrado para a busca." : isEc2Page ? "Nenhum dispositivo com vínculo EC2 cadastrado." : "Nenhum dispositivo cadastrado." %></p>
+        <p class="empty-message"><%= searchTerm ? "Nenhum dispositivo encontrado para a busca." : "Nenhum dispositivo cadastrado." %></p>
       <% } %>
 
       <% devices.forEach(device => {
@@ -693,12 +656,6 @@
                 <span class="meta-value"><%= device.access_port %></span>
               </div>
             <% } %>
-            <% if (device.ec2_instance_id) { %>
-              <div class="meta-row">
-                <span class="meta-label">EC2</span>
-                <span class="meta-value"><%= device.ec2_instance_id %> · <%= device.aws_region %></span>
-              </div>
-            <% } %>
           </div>
 
           <div class="card-actions">
@@ -721,11 +678,6 @@
               <% if (device.external_access_url) { %>
                 <a class="action-button" href="<%= device.external_access_url %>" target="_blank" rel="noopener noreferrer" aria-label="Acessar <%= device.name %> pelo endereco externo" title="Acessar <%= device.name %> pelo endereco externo">
                   <i class="fa-solid fa-globe" aria-hidden="true"></i>
-                </a>
-              <% } %>
-              <% if (device.ec2_instance_id) { %>
-                <a class="action-button" href="/device/<%= device.id %>/schedules" aria-label="Gerenciar agendamentos de <%= device.name %>" title="Agendamentos AWS">
-                  <i class="fa-solid fa-clock" aria-hidden="true"></i>
                 </a>
               <% } %>
               <a class="action-button" href="/device/<%= device.id %>/edit" aria-label="Editar <%= device.name %>" title="Editar <%= device.name %>">

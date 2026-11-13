@@ -36,14 +36,6 @@ const devices = database.define(
             type: Sequelize.INTEGER,
             allowNull: true
         },
-        ec2_instance_id: {
-            type: Sequelize.STRING(19),
-            allowNull: true
-        },
-        aws_region: {
-            type: Sequelize.STRING(32),
-            allowNull: true
-        },
         status: {
             type: Sequelize.INTEGER,
             allowNull: false
